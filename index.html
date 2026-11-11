@@ -195,6 +195,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
     </button>
     <div class="menu" id="menu" hidden>
+      <button id="mUpdate">App aktualisieren</button>
       <button id="mPreview">Muster-PDF ansehen</button>
       <button id="mReload">Preise und Listen neu laden</button>
       <button id="mClear" class="danger">Neue Erfassung (alles leeren)</button>
@@ -317,6 +318,7 @@ textarea.in { min-height: 64px; resize: vertical; }
     produkte: [{ name: 'Produkt 1', preis: 290.23 }, { name: 'Produkt 2', preis: 290.23 }, { name: 'Produkt 3', preis: 290.23 }, { name: 'Produkt 4', preis: 290.23 }],
     farben: ['Farbe 1', 'Farbe 2', 'Farbe 3']
   };
+  var APP_VERSION = '11.11.2026 · 3';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v1';
   var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'breite', 'hoehe', 'tiefe', 'bem'];
   var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
@@ -412,7 +414,7 @@ textarea.in { min-height: 64px; resize: vertical; }
   var NEXT_ORDER = ['vorname', 'nachname', 'strasse', 'plz', 'ort', 'telefon', 'email', null,
     'fZimmer', 'fZusatz', 'fProdukt', 'fFarbe', 'fBreite', 'fHoehe', 'fTiefe', null];
   document.addEventListener('keydown', function (ev) {
-    if (ev.key !== 'Enter' || ev.isComposing) return;
+    if (ev.key !== 'Enter' && ev.keyCode !== 13) return;
     var el = ev.target;
     if (!el || el.tagName !== 'INPUT') return;
     var i = NEXT_ORDER.indexOf(el.id);
@@ -522,7 +524,7 @@ textarea.in { min-height: 64px; resize: vertical; }
   function renderSummary() {
     var t = totals();
     $('sCount').textContent = t.count; $('sArea').textContent = fmt2.format(t.area) + ' m²'; $('sTotal').textContent = 'CHF ' + fmt2.format(t.total);
-    $('srcInfo').textContent = 'Preise und Listen: ' + (master.source === 'Excel' ? 'aus Excel, geladen ' + master.loadedAt : 'Platzhalter (noch nicht aus Excel geladen)');
+    $('srcInfo').textContent = 'Preise und Listen: ' + (master.source === 'Excel' ? 'aus Excel, geladen ' + master.loadedAt : 'Platzhalter (noch nicht aus Excel geladen)') + ' · App-Version ' + APP_VERSION;
   }
   function renderAll(syncForm) { renderCustomer(); renderForm(syncForm); renderList(); renderSummary(); renderAuth(); save(); }
 
@@ -545,6 +547,8 @@ textarea.in { min-height: 64px; resize: vertical; }
     dialog('<h3>Neue Erfassung?</h3><p>Alle Kundendaten und Produkte dieser Erfassung werden gelöscht. Bereits gespeicherte Aufträge bleiben in Excel.</p><div class="acts"><button class="btn primary" data-act="new">Alles leeren</button><button class="btn" data-act="close">Abbrechen</button></div>');
   });
   $('mReload').addEventListener('click', function () { toggleMenu(false); loadMaster(true); });
+  // Neueste Version holen: andere Adresse umgeht den Zwischenspeicher, die Erfassung bleibt erhalten
+  $('mUpdate').addEventListener('click', function () { toggleMenu(false); save(); location.replace(location.pathname + '?v=' + Date.now()); });
   // Muster-PDF: zeigt das Layout mit den aktuellen Eingaben (oder Beispieldaten), ohne etwas zu speichern
   $('mPreview').addEventListener('click', function () {
     toggleMenu(false);
@@ -585,7 +589,7 @@ textarea.in { min-height: 64px; resize: vertical; }
     $('setupNotice').hidden = configured();
     $('loginNotice').hidden = !configured() || !!account;
     $('mLogout').hidden = !account;
-    $('mInfo').textContent = account ? 'Angemeldet als ' + (account.username || '') : (authError ? 'Anmeldefehler: ' + authError : '');
+    $('mInfo').textContent = (account ? 'Angemeldet als ' + (account.username || '') : (authError ? 'Anmeldefehler: ' + authError : 'Nicht angemeldet')) + ' · Version ' + APP_VERSION;
   }
   async function initAuth() {
     if (!configured() || !window.msal) { renderAuth(); return; }
