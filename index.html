@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Aufmass">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#1d7a52">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-180.png">
+<title>FlyGuard Aufmass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.27.0/lib/msal-browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+/* Layout: eine schmale Spalte für das iPhone im Hochformat; Abschnitte als Karten; Produkt-Formular direkt im Abschnitt, erfasste Produkte als Liste darunter */
+:root {
+  --bg: #eef2ef; --surface: #ffffff; --surface-2: #f5f8f6; --fg: #16201b; --muted: #5d6b63; --line: #d8e0db;
+  --accent: #1d7a52; --accent-fg: #ffffff; --accent-soft: #e2f1e9;
+  --warn: #a8630c; --warn-soft: #fbeedb; --danger: #b3261e; --danger-soft: #fbe5e3;
+  --shadow: 0 1px 2px rgba(22, 32, 27, .06), 0 4px 16px rgba(22, 32, 27, .06);
+  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-num: "Barlow Semi Condensed", "Inter", system-ui, sans-serif;
+  --r-card: 18px; --r-ctl: 12px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1311; --surface: #161e1a; --surface-2: #1d2722; --fg: #e7eee9; --muted: #98a79f; --line: #2a3530;
+    --accent: #4cbf8a; --accent-fg: #07130d; --accent-soft: #17352a;
+    --warn: #e3a34c; --warn-soft: #3a2a12; --danger: #f08a80; --danger-soft: #3d1a17;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.25);
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-ui); font-size: 16px; line-height: 1.4; padding-bottom: env(safe-area-inset-bottom, 0px); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+body.locked { overflow: hidden; }
+[hidden] { display: none !important; }
+button { font: inherit; color: inherit; }
+a { color: var(--accent); }
+.wrap {
+  max-width: 560px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 12px 40px; display: flex; flex-direction: column; gap: 14px;
+}
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); padding-top: env(safe-area-inset-top, 0px); margin-top: calc(-1 * env(safe-area-inset-top, 0px)); }
+.top-in { max-width: 560px; margin: 0 auto; display: flex; align-items: center; gap: 10px; padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px)); position: relative; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
+.mark { width: 34px; height: 34px; border-radius: 10px; flex: none;
+  background: repeating-linear-gradient(0deg, transparent 0 4px, rgba(255,255,255,.35) 4px 5px), repeating-linear-gradient(90deg, transparent 0 4px, rgba(255,255,255,.35) 4px 5px), var(--accent); }
+.brand-t { display: flex; flex-direction: column; min-width: 0; }
+.brand-t b { font-family: var(--font-num); font-size: 19px; font-weight: 700; line-height: 1.1; }
+.brand-t span { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.acct { font-size: 13px; font-weight: 600; padding: 7px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); cursor: pointer; white-space: nowrap; }
+.acct.on { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.acct.off { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.icon-btn { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); display: grid; place-items: center; cursor: pointer; flex: none; }
+.icon-btn svg { width: 20px; height: 20px; }
+.menu { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); top: 56px; z-index: 6; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 6px; min-width: 230px; display: flex; flex-direction: column; }
+.menu button { text-align: left; border: 0; background: none; padding: 12px; border-radius: 10px; cursor: pointer; font-size: 15px; }
+.menu button:hover, .menu button:focus-visible { background: var(--surface-2); }
+.menu .danger { color: var(--danger); }
+.menu .info { font-size: 12.5px; color: var(--muted); padding: 8px 12px; border-top: 1px solid var(--line); margin-top: 4px; }
+.notice { font-size: 13.5px; color: var(--muted); background: var(--surface-2); border: 1px dashed var(--line); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.notice b { color: var(--fg); }
+.notice.warn { background: var(--warn-soft); border-color: transparent; color: var(--fg); }
+.card { background: var(--surface); border-radius: var(--r-card); box-shadow: var(--shadow); border: 1px solid var(--line); }
+.card-h { display: flex; align-items: center; gap: 10px; padding: 16px 16px 4px; }
+.card-h h2 { margin: 0; font-family: var(--font-num); font-size: 20px; font-weight: 600; flex: 1; }
+.step { font-family: var(--font-num); font-weight: 700; color: var(--accent); margin-right: 2px; }
+.card-b { padding: 8px 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.badge { font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); white-space: nowrap; }
+.badge.warn { background: var(--warn-soft); color: var(--warn); }
+.toggle { width: 100%; display: flex; align-items: center; gap: 10px; padding: 16px; border: 0; background: none; cursor: pointer; text-align: left; }
+.toggle .h2 { display: block; font-family: var(--font-num); font-size: 20px; font-weight: 600; }
+.toggle .sum { display: block; font-size: 14px; color: var(--muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.toggle .grow { flex: 1; min-width: 0; }
+.chev { width: 22px; height: 22px; color: var(--muted); transition: transform .2s; flex: none; }
+.open .chev { transform: rotate(180deg); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.grid-plz { display: grid; grid-template-columns: 7.5rem 1fr; gap: 10px; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field label { font-size: 13.5px; font-weight: 500; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.field label i { font-style: normal; font-weight: 400; opacity: .8; }
+.in { width: 100%; font: inherit; font-size: 17px; color: var(--fg); background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-ctl); padding: 12px; min-height: 48px; -webkit-appearance: none; appearance: none; }
+.in::placeholder { color: var(--muted); opacity: .7; }
+.in:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+select.in { padding-right: 34px; text-overflow: ellipsis;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 17px) 21px, calc(100% - 12px) 21px; background-size: 5px 5px; background-repeat: no-repeat; }
+textarea.in { min-height: 64px; resize: vertical; }
+.in.err { border-color: var(--danger); background: var(--danger-soft); }
+.hint { font-size: 12.5px; color: var(--danger); }
+.hint:empty { display: none; }
+.unit { position: relative; }
+.unit .in { padding-right: 34px; font-variant-numeric: tabular-nums; }
+.unit span { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 14px; pointer-events: none; }
+.meta { font-size: 13.5px; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.meta b { color: var(--fg); font-weight: 600; }
+.pform { display: flex; flex-direction: column; gap: 12px; border-radius: 16px; scroll-margin-top: calc(80px + env(safe-area-inset-top, 0px)); }
+.pform.editing { background: var(--warn-soft); padding: 12px; margin: 0 -4px; }
+.pform-h b { font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.editing .pform-h b { color: var(--warn); }
+.area { border-radius: 14px; padding: 12px 14px; background: var(--accent-soft); display: flex; flex-direction: column; gap: 4px; }
+.area-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.area-top span { font-weight: 600; }
+.area-top b { font-family: var(--font-num); font-size: 34px; line-height: 1; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+.area-top b small { font-size: 18px; }
+.tape { height: 9px; border-radius: 3px; opacity: .5;
+  background: repeating-linear-gradient(90deg, var(--accent) 0 1px, transparent 1px 10px), repeating-linear-gradient(90deg, var(--accent) 0 1px, transparent 1px 50px);
+  background-size: 100% 5px, 100% 9px; background-repeat: no-repeat; background-position: bottom, bottom; }
+.area .f { font-size: 12.5px; color: var(--muted); }
+.area .p { font-size: 14px; display: flex; justify-content: space-between; gap: 10px; }
+.area .p b { font-family: var(--font-num); font-size: 18px; }
+.acts-row { display: flex; gap: 8px; }
+.btn { flex: 1; min-height: 52px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface-2); cursor: pointer; font-weight: 600; font-size: 16px; padding: 0 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; color: var(--fg); }
+.btn svg { width: 20px; height: 20px; }
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.btn.primary:disabled { background: var(--line); border-color: var(--line); color: var(--muted); cursor: not-allowed; }
+.btn.danger { color: var(--danger); background: var(--danger-soft); border-color: transparent; flex: none; }
+.btn.ghost { flex: none; }
+.need { font-size: 13px; color: var(--muted); text-align: center; }
+.need:empty { display: none; }
+.list { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
+.list:empty { display: none; }
+.row { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; cursor: pointer; background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; padding: 12px; min-height: 60px; }
+.row.active { border-color: var(--warn); background: var(--warn-soft); }
+.num { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; flex: none; font-family: var(--font-num); font-weight: 700; font-size: 15px; background: var(--surface); border: 1.5px solid var(--line); color: var(--muted); }
+.row .txt { flex: 1; min-width: 0; }
+.row .ttl, .row .sub { display: block; }
+.row .ttl { font-weight: 600; font-size: 16.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .sub { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .sub.w { color: var(--warn); }
+.row .m2 { font-family: var(--font-num); font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.row .m2 small { font-size: 13px; color: var(--muted); font-weight: 500; }
+.row svg { width: 18px; height: 18px; color: var(--muted); flex: none; }
+.kv { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15.5px; }
+.kv span:first-child { color: var(--muted); }
+.kv .v { font-family: var(--font-num); font-weight: 600; font-size: 19px; font-variant-numeric: tabular-nums; }
+.total { border-top: 1px solid var(--line); padding-top: 12px; }
+.total .v { font-size: 30px; font-weight: 700; }
+.fine { font-size: 12.5px; color: var(--muted); }
+.decide { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.big { min-height: 92px; border-radius: 16px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-weight: 600; font-size: 16.5px; border: 1px solid var(--line); background: var(--surface-2); color: var(--fg); text-align: center; padding: 10px; }
+.big svg { width: 24px; height: 24px; }
+.big small { font-weight: 400; font-size: 12.5px; color: var(--muted); }
+.big.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.big.primary small { color: var(--accent-fg); opacity: .85; }
+.dlg-bg { position: fixed; inset: 0; z-index: 30; background: rgba(8, 12, 10, .5); display: grid; place-items: center;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.dlg { width: 100%; max-width: 420px; max-height: 100%; overflow-y: auto; background: var(--surface); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow); }
+.dlg h3 { margin: 0; font-family: var(--font-num); font-size: 22px; font-weight: 600; }
+.dlg p { margin: 0; color: var(--muted); font-size: 15px; }
+.dlg ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 15px; }
+.dlg .acts { display: flex; flex-direction: column; gap: 8px; }
+.ok-mark { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+.ok-mark svg { width: 28px; height: 28px; }
+.dlg .doc { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-size: 14.5px; display: flex; flex-direction: column; gap: 4px; }
+.steps { list-style: none; padding: 0 !important; }
+.steps li { display: flex; gap: 10px; align-items: center; color: var(--muted); }
+.steps li::before { content: ""; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--line); flex: none; }
+.steps li.run { color: var(--fg); font-weight: 600; }
+.steps li.run::before { border-color: var(--accent); border-right-color: transparent; animation: spin .8s linear infinite; }
+.steps li.done { color: var(--fg); }
+.steps li.done::before { background: var(--accent); border-color: var(--accent); }
+.steps li.fail { color: var(--danger); font-weight: 600; }
+.steps li.fail::before { background: var(--danger); border-color: var(--danger); }
+@keyframes spin { to { transform: rotate(360deg); } }
+.err-box { background: var(--danger-soft); color: var(--danger); border-radius: 12px; padding: 10px 12px; font-size: 13.5px; word-break: break-word; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .chev { transition: none; } .steps li.run::before { animation: none; } }
+@media (max-width: 340px) { .decide { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <div class="mark" aria-hidden="true"></div>
+      <div class="brand-t"><b>FlyGuard Aufmass</b><span id="dateLine">Insektenschutz</span></div>
+    </div>
+    <button class="acct" id="acctBtn">Anmelden</button>
+    <button class="icon-btn" id="menuBtn" aria-label="Menü" aria-expanded="false">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+    </button>
+    <div class="menu" id="menu" hidden>
+      <button id="mPreview">Muster-PDF ansehen</button>
+      <button id="mReload">Preise und Listen neu laden</button>
+      <button id="mClear" class="danger">Neue Erfassung (alles leeren)</button>
+      <button id="mLogout">Abmelden</button>
+      <div class="info" id="mInfo"></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="notice warn" id="setupNotice" hidden><span><b>Einrichtung noch nicht abgeschlossen:</b> Die Verbindung zu deinem Microsoft-Konto fehlt noch. Erfassen funktioniert, Speichern noch nicht.</span></div>
+  <div class="notice warn" id="loginNotice" hidden>
+    <span><b>Nicht angemeldet.</b> Zum Speichern einmal mit deinem FlyGuard-Konto anmelden. Erfassen geht auch ohne.</span>
+    <button class="btn primary" id="loginBtn">Mit FlyGuard-Konto anmelden</button>
+  </div>
+
+  <!-- 1. Kundendaten -->
+  <section class="card" id="custCard">
+    <button class="toggle" id="custToggle" aria-expanded="true" aria-controls="custBody">
+      <span class="grow"><span class="h2" role="heading" aria-level="2"><span class="step">1.</span> Kundendaten</span><span class="sum" id="custSum">Name, Adresse, Telefon, E-Mail und Datum</span></span>
+      <span class="badge warn" id="custBadge" hidden></span>
+      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <div class="card-b" id="custBody">
+      <div class="grid2">
+        <div class="field"><label for="vorname">Vorname</label><input class="in" id="vorname" autocomplete="off" autocapitalize="words"></div>
+        <div class="field"><label for="nachname">Nachname</label><input class="in" id="nachname" autocomplete="off" autocapitalize="words"></div>
+      </div>
+      <div class="field"><label for="strasse">Strasse und Nr.</label><input class="in" id="strasse" autocomplete="off" autocapitalize="words"></div>
+      <div class="grid-plz">
+        <div class="field"><label for="plz">PLZ</label><input class="in" id="plz" inputmode="numeric" autocomplete="off" maxlength="6"></div>
+        <div class="field"><label for="ort">Ort</label><input class="in" id="ort" autocomplete="off" autocapitalize="words"></div>
+      </div>
+      <div class="field"><label for="telefon">Telefon</label><input class="in" id="telefon" type="tel" inputmode="tel" autocomplete="off"></div>
+      <div class="field"><label for="email">E-Mail <i>(optional)</i></label><input class="in" id="email" type="email" inputmode="email" autocomplete="off" autocapitalize="off"></div>
+      <div class="meta"><span>Aufmassdatum <b id="aufmassDatum"></b></span><span>Auftragsnr. <b>wird beim Speichern vergeben</b></span></div>
+    </div>
+  </section>
+
+  <!-- 2. Produkte -->
+  <section class="card">
+    <div class="card-h"><h2><span class="step">2.</span> Produkte</h2><span class="badge" id="elemBadge">0 erfasst</span></div>
+    <div class="card-b">
+      <div class="pform" id="pform">
+        <div class="pform-h"><b id="formTitle">Neues Produkt</b></div>
+        <div class="grid2">
+          <div class="field"><label for="fZimmer">Zimmer / Bereich</label><select class="in" id="fZimmer"></select></div>
+          <div class="field"><label for="fZusatz" id="fZusatzLbl">Zusatzbezeichnung</label><input class="in" id="fZusatz" placeholder="z. B. Büro 2" autocomplete="off"></div>
+        </div>
+        <div class="hint" id="hZusatz"></div>
+        <div class="grid2">
+          <div class="field"><label for="fProdukt">Produkt</label><select class="in" id="fProdukt"></select></div>
+          <div class="field"><label for="fFarbe">Farbe</label><select class="in" id="fFarbe"></select></div>
+        </div>
+        <div class="grid3">
+          <div class="field"><label for="fBreite">Breite</label><div class="unit"><input class="in" id="fBreite" inputmode="decimal" autocomplete="off" placeholder="0"><span>cm</span></div></div>
+          <div class="field"><label for="fHoehe">Höhe</label><div class="unit"><input class="in" id="fHoehe" inputmode="decimal" autocomplete="off" placeholder="0"><span>cm</span></div></div>
+          <div class="field"><label for="fTiefe">Tiefe <i>(opt.)</i></label><div class="unit"><input class="in" id="fTiefe" inputmode="decimal" autocomplete="off" placeholder="0"><span>cm</span></div></div>
+        </div>
+        <div class="hint" id="hMasse"></div>
+        <div class="field"><label for="fBem">Bemerkungen <i>(optional)</i></label><textarea class="in" id="fBem" placeholder="z. B. Fenstergriff beachten"></textarea></div>
+        <div class="area" aria-live="polite">
+          <div class="area-top"><span>Berechnete Fläche</span><b id="fArea">–</b></div>
+          <div class="tape" aria-hidden="true"></div>
+          <div class="f" id="fFormula">Breite × Höhe ÷ 10'000, ohne Aufrundung</div>
+          <div class="p"><span id="fPriceLbl">Preis</span><b id="fPrice">–</b></div>
+        </div>
+        <div class="acts-row">
+          <button class="btn danger" id="fDelete" hidden>Löschen</button>
+          <button class="btn ghost" id="fCancel" hidden>Abbrechen</button>
+          <button class="btn primary" id="fAdd" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span id="fAddLbl">Hinzufügen</span></button>
+        </div>
+        <div class="need" id="fNeed"></div>
+      </div>
+      <div class="list" id="list"></div>
+    </div>
+  </section>
+
+  <!-- 3. Zusammenfassung -->
+  <section class="card">
+    <div class="card-h"><h2><span class="step">3.</span> Zusammenfassung</h2></div>
+    <div class="card-b">
+      <div class="kv"><span>Produkte</span><span class="v" id="sCount">0</span></div>
+      <div class="kv"><span>Gesamtfläche</span><span class="v" id="sArea">0.00 m²</span></div>
+      <div class="kv total"><span>Gesamtpreis</span><span class="v" id="sTotal">CHF 0.00</span></div>
+      <div class="fine">Mindestpreis pro Produkt: Regel noch offen, hier noch nicht berücksichtigt.</div>
+    </div>
+  </section>
+
+  <!-- 4. Kundenentscheidung -->
+  <section class="card">
+    <div class="card-h"><h2><span class="step">4.</span> Kundenentscheidung</h2></div>
+    <div class="card-b">
+      <div class="decide">
+        <button class="big" id="btnOfferte"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg>Offerte erstellen<small>Kunde entscheidet später</small></button>
+        <button class="big primary" id="btnDirekt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9.5"/></svg>Direkt bestellt<small>Kaufvertrag erstellen</small></button>
+      </div>
+    </div>
+  </section>
+  <div class="fine" id="srcInfo" style="text-align:center"></div>
+</main>
+
+<div class="dlg-bg" id="dlgBg" hidden><div class="dlg" role="alertdialog" aria-modal="true" id="dlg"></div></div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ================= Einstellungen =================
+  var CONFIG = {
+    clientId: '',            // App-Registrierung (wird bei der Einrichtung eingetragen)
+    tenantId: '',            // FlyGuard-Verzeichnis
+    basePath: 'Fylguard Excel Datei',   // Ordner in OneDrive
+    workbook: 'FlyGuard_Buero.xlsx',
+    ordersFolder: 'Aufträge',
+    company: 'FlyGuard',
+    scopes: ['User.Read', 'Files.ReadWrite']
+  };
+  var DEFAULTS = {
+    zimmer: ['Schlafzimmer', 'Wohnzimmer', 'Esszimmer', 'Küche', 'WC', 'Badezimmer', 'Büro', 'Gamingzimmer', 'Sonstiges'],
+    produkte: [{ name: 'Produkt 1', preis: 290.23 }, { name: 'Produkt 2', preis: 290.23 }, { name: 'Produkt 3', preis: 290.23 }, { name: 'Produkt 4', preis: 290.23 }],
+    farben: ['Farbe 1', 'Farbe 2', 'Farbe 3']
+  };
+  var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v1';
+  var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'breite', 'hoehe', 'tiefe', 'bem'];
+  var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
+  var CUST_FIELDS = ['vorname', 'nachname', 'strasse', 'plz', 'ort', 'telefon', 'email'];
+
+  // ================= Hilfsfunktionen =================
+  var fmt2 = new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function uid() { return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10); }
+  function trimmed(v) { return String(v == null ? '' : v).trim(); }
+  function round(n, d) { var f = Math.pow(10, d); return Math.round(n * f) / f; }
+  function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* kein Speicher */ } }
+  function restore(k) { try { var r = localStorage.getItem(k); return r ? JSON.parse(r) : null; } catch (e) { return null; } }
+  function dateCH(d) { return d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' }); }
+  function excelDate(d) { return (Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(1899, 11, 30)) / 86400000; }
+  function safeName(s) { return trimmed(s).replace(/["*:<>?\/\\|#%]/g, ' ').replace(/\s+/g, ' ').trim(); }
+
+  function parseCm(raw) {
+    var s = trimmed(raw).replace(/\s/g, '').replace(',', '.');
+    if (s === '') return { empty: true, ok: false };
+    if (!/^\d+(\.\d+)?$/.test(s)) return { ok: false, msg: 'keine gültige Zahl' };
+    var v = parseFloat(s);
+    if (v < 0.1 || v > 999) return { ok: false, msg: 'bitte 0.1 bis 999 cm' };
+    return { ok: true, val: v };
+  }
+
+  // ================= Stammdaten =================
+  var master = restore(KEY_MASTER) || { zimmer: DEFAULTS.zimmer, produkte: DEFAULTS.produkte, farben: DEFAULTS.farben, source: 'Platzhalter', loadedAt: null };
+  function preisFor(name) { for (var i = 0; i < master.produkte.length; i++) if (master.produkte[i].name === name) return master.produkte[i].preis; return null; }
+  function bereich(e) { var z = e.zimmer || '', zu = trimmed(e.zusatz); if (!z || z === 'Sonstiges') return zu; return zu ? z + ', ' + zu : z; }
+  function calc(e) {
+    var b = parseCm(e.breite), h = parseCm(e.hoehe);
+    var area = (b.ok && h.ok) ? b.val * h.val / 10000 : null;
+    var p = preisFor(e.produkt);
+    var price = (area != null && p != null) ? area * p : null;
+    return { b: b, h: h, area: area, preis: p, price: price };
+  }
+  function missing(e) {
+    var c = calc(e), t = parseCm(e.tiefe), out = [];
+    if (!e.zimmer) out.push('Zimmer');
+    if (e.zimmer === 'Sonstiges' && !trimmed(e.zusatz)) out.push('Bezeichnung');
+    if (!e.produkt) out.push('Produkt');
+    else if (preisFor(e.produkt) == null) out.push('Produkt (ohne Preis)');
+    if (!e.farbe) out.push('Farbe');
+    if (!c.b.ok) out.push(c.b.empty ? 'Breite' : 'gültige Breite');
+    if (!c.h.ok) out.push(c.h.empty ? 'Höhe' : 'gültige Höhe');
+    if (!t.empty && !t.ok) out.push('gültige Tiefe');
+    return out;
+  }
+  function fillSelects() {
+    function fill(sel, items) {
+      var cur = sel.value;
+      sel.innerHTML = '<option value="">Wählen</option>' + items.map(function (x) { return '<option>' + esc(x) + '</option>'; }).join('');
+      sel.value = cur;
+    }
+    fill($('fZimmer'), master.zimmer);
+    fill($('fProdukt'), master.produkte.map(function (p) { return p.name; }));
+    fill($('fFarbe'), master.farben);
+  }
+
+  // ================= Zustand =================
+  var state = null;
+  function emptyForm(carry) { return { zimmer: '', zusatz: '', produkt: carry ? carry.produkt : '', farbe: carry ? carry.farbe : '', breite: '', hoehe: '', tiefe: '', bem: '' }; }
+  function emptyState() { return { captureId: uid(), startedAt: new Date().toISOString(), custOpen: true, editId: null, stash: null, customer: {}, elements: [], form: emptyForm(null), pending: null }; }
+  function save() { store(KEY_STATE, state); }
+  function blankForm() { var last = state.elements.length ? state.elements[state.elements.length - 1] : null; return emptyForm(last); }
+  function formHasInput(f) { return !!(f.zimmer || trimmed(f.zusatz) || trimmed(f.breite) || trimmed(f.hoehe) || trimmed(f.tiefe) || trimmed(f.bem)); }
+
+  // ================= Kundendaten =================
+  function custMissing() {
+    var c = state.customer, m = [];
+    if (!trimmed(c.vorname) || !trimmed(c.nachname)) m.push('Name');
+    if (!trimmed(c.strasse) || !trimmed(c.plz) || !trimmed(c.ort)) m.push('Adresse');
+    if (!trimmed(c.telefon)) m.push('Telefon');
+    return m;
+  }
+  function renderCustomer() {
+    var c = state.customer;
+    CUST_FIELDS.forEach(function (f) { var el = $(f); if (document.activeElement !== el) el.value = c[f] || ''; });
+    var name = [c.vorname, c.nachname].filter(Boolean).join(' ');
+    var parts = [name, c.ort].filter(function (x) { return trimmed(x); });
+    $('custSum').textContent = parts.length ? parts.join(' · ') : 'Name, Adresse, Telefon, E-Mail und Datum';
+    var miss = custMissing(), badge = $('custBadge');
+    if (miss.length && parts.length) { badge.hidden = false; badge.textContent = miss.join(', ') + ' fehlt'; } else { badge.hidden = true; }
+    $('custCard').classList.toggle('open', state.custOpen);
+    $('custBody').hidden = !state.custOpen;
+    $('custToggle').setAttribute('aria-expanded', String(state.custOpen));
+  }
+  CUST_FIELDS.forEach(function (f) { $(f).addEventListener('input', function () { state.customer[f] = this.value; renderCustomer(); save(); }); });
+  $('custToggle').addEventListener('click', function () { state.custOpen = !state.custOpen; renderCustomer(); save(); });
+
+  // ================= Produkt-Formular =================
+  var touched = {};
+  function renderForm(syncInputs) {
+    var f = state.form, c = calc(f), editing = !!state.editId;
+    if (syncInputs) FIELDS.forEach(function (k) { $(INPUT_ID[k]).value = f[k] || ''; });
+    $('pform').classList.toggle('editing', editing);
+    $('formTitle').textContent = editing ? 'Bearbeiten: ' + (bereich(f) || 'Produkt') : (state.elements.length ? 'Nächstes Produkt' : 'Neues Produkt');
+    $('fZusatzLbl').innerHTML = f.zimmer === 'Sonstiges' ? 'Bezeichnung <i>(nötig)</i>' : 'Zusatzbezeichnung';
+    $('fArea').innerHTML = c.area != null ? fmt2.format(c.area) + ' <small>m²</small>' : '–';
+    $('fFormula').textContent = c.area != null
+      ? fmt2.format(c.b.val).replace(/\.00$/, '') + ' × ' + fmt2.format(c.h.val).replace(/\.00$/, '') + ' cm ÷ 10\'000, ohne Aufrundung'
+      : 'Breite × Höhe ÷ 10\'000, ohne Aufrundung';
+    $('fPriceLbl').textContent = c.preis != null ? 'Preis (CHF ' + fmt2.format(c.preis) + '/m²)' : 'Preis';
+    $('fPrice').textContent = c.price != null ? 'CHF ' + fmt2.format(c.price) : '–';
+    var t = parseCm(f.tiefe), msgs = [];
+    function mark(id, bad) { $(id).classList.toggle('err', !!bad); }
+    var bBad = touched.breite && !c.b.empty && !c.b.ok, hBad = touched.hoehe && !c.h.empty && !c.h.ok, tBad = touched.tiefe && !t.empty && !t.ok;
+    mark('fBreite', bBad); mark('fHoehe', hBad); mark('fTiefe', tBad);
+    if (bBad) msgs.push('Breite: ' + c.b.msg);
+    if (hBad) msgs.push('Höhe: ' + c.h.msg);
+    if (tBad) msgs.push('Tiefe: ' + t.msg);
+    $('hMasse').textContent = msgs.join(' · ');
+    var zBad = touched.zusatz && f.zimmer === 'Sonstiges' && !trimmed(f.zusatz);
+    mark('fZusatz', zBad);
+    $('hZusatz').textContent = zBad ? 'Bei «Sonstiges» bitte eintragen, was es ist.' : '';
+    var miss = missing(f);
+    $('fAdd').disabled = miss.length > 0;
+    $('fAddLbl').textContent = editing ? 'Speichern' : 'Hinzufügen';
+    $('fAdd').querySelector('svg').style.display = editing ? 'none' : '';
+    $('fNeed').textContent = miss.length && (editing || formHasInput(f)) ? 'Noch nötig: ' + miss.join(', ') : (miss.length ? 'Fülle Zimmer, Produkt, Farbe, Breite und Höhe aus.' : '');
+    $('fDelete').hidden = !editing; $('fCancel').hidden = !editing;
+    if (!editing) { $('fDelete').textContent = 'Löschen'; $('fDelete').dataset.armed = ''; }
+  }
+  FIELDS.forEach(function (k) {
+    var el = $(INPUT_ID[k]);
+    el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', function () { state.form[k] = el.value; if (k === 'zimmer') touched.zusatz = true; renderForm(false); save(); });
+    el.addEventListener('blur', function () { touched[k] = true; renderForm(false); });
+  });
+  function resetForm() { touched = {}; if (state.stash) { state.form = state.stash; state.stash = null; } else { state.form = blankForm(); } state.editId = null; }
+  $('fAdd').addEventListener('click', function () {
+    if (missing(state.form).length) return;
+    var item = {}; FIELDS.forEach(function (k) { item[k] = state.form[k] || ''; });
+    if (state.editId) { item.id = state.editId; state.elements = state.elements.map(function (e) { return e.id === state.editId ? item : e; }); resetForm(); }
+    else { item.id = uid(); state.elements.push(item); touched = {}; state.form = blankForm(); }
+    renderAll(true);
+    $('pform').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  $('fCancel').addEventListener('click', function () { resetForm(); renderAll(true); });
+  $('fDelete').addEventListener('click', function () {
+    if (!this.dataset.armed) { this.dataset.armed = '1'; this.textContent = 'Wirklich?'; return; }
+    var id = state.editId; state.elements = state.elements.filter(function (e) { return e.id !== id; }); resetForm(); renderAll(true);
+  });
+
+  // ================= Liste & Summen =================
+  var ICON_CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+  function renderList() {
+    $('list').innerHTML = state.elements.map(function (e, i) {
+      var c = calc(e), miss = missing(e), name = bereich(e) || 'Ohne Bezeichnung';
+      var sub = miss.length ? '<span class="sub w">⚠ Unvollständig: ' + esc(miss.join(', ')) + '</span>'
+        : '<span class="sub">' + esc([e.produkt, e.farbe].filter(Boolean).join(' · ')) + ' · ' + esc(e.breite) + ' × ' + esc(e.hoehe) + ' cm</span>';
+      var m2 = c.area != null ? fmt2.format(c.area) + ' <small>m²</small>' : '<small>–</small>';
+      return '<button class="row' + (e.id === state.editId ? ' active' : '') + '" data-id="' + e.id + '"><span class="num">' + (i + 1) + '</span>' +
+        '<span class="txt"><span class="ttl">' + esc(name) + '</span>' + sub + '</span><span class="m2">' + m2 + '</span>' + ICON_CHEV + '</button>';
+    }).join('');
+    $('elemBadge').textContent = state.elements.length + ' erfasst';
+  }
+  $('list').addEventListener('click', function (ev) {
+    var r = ev.target.closest('.row'); if (!r) return;
+    var src = state.elements.filter(function (e) { return e.id === r.dataset.id; })[0]; if (!src) return;
+    if (!state.editId) state.stash = state.form;
+    state.editId = src.id; state.form = {}; FIELDS.forEach(function (k) { state.form[k] = src[k] || ''; });
+    touched = { breite: true, hoehe: true, tiefe: true, zusatz: true };
+    renderAll(true); $('pform').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  // Positionen mit gerundeten Werten (so wie auf dem Dokument)
+  function positions() {
+    return state.elements.map(function (e, i) {
+      var c = calc(e), t = parseCm(e.tiefe);
+      var area = c.area != null ? round(c.area, 4) : null;
+      return { pos: i + 1, zimmer: e.zimmer, zusatz: trimmed(e.zusatz), bereich: bereich(e), produkt: e.produkt, farbe: e.farbe,
+        breite: c.b.ok ? c.b.val : null, hoehe: c.h.ok ? c.h.val : null, tiefe: t.ok ? t.val : null,
+        area: area, preisM2: c.preis, price: c.price != null ? round(c.price, 2) : null, bem: trimmed(e.bem) };
+    });
+  }
+  function totals() {
+    var area = 0, total = 0;
+    positions().forEach(function (p) { if (p.area != null) area += p.area; if (p.price != null) total += p.price; });
+    return { count: state.elements.length, area: round(area, 4), total: round(total, 2) };
+  }
+  function renderSummary() {
+    var t = totals();
+    $('sCount').textContent = t.count; $('sArea').textContent = fmt2.format(t.area) + ' m²'; $('sTotal').textContent = 'CHF ' + fmt2.format(t.total);
+    $('srcInfo').textContent = 'Preise und Listen: ' + (master.source === 'Excel' ? 'aus Excel, geladen ' + master.loadedAt : 'Platzhalter (noch nicht aus Excel geladen)');
+  }
+  function renderAll(syncForm) { renderCustomer(); renderForm(syncForm); renderList(); renderSummary(); renderAuth(); save(); }
+
+  // ================= Dialog & Menü =================
+  function dialog(html) { $('dlg').innerHTML = html; $('dlgBg').hidden = false; document.body.classList.add('locked'); var f = $('dlg').querySelector('button, a'); if (f) f.focus(); }
+  function closeDialog() { $('dlgBg').hidden = true; document.body.classList.remove('locked'); }
+  var dialogActions = {};
+  $('dlgBg').addEventListener('click', function (ev) {
+    var a = ev.target.closest('[data-act]'); if (!a) { if (ev.target === this && !busy) closeDialog(); return; }
+    var fn = dialogActions[a.dataset.act]; if (fn) fn(a);
+  });
+  dialogActions.close = function () { closeDialog(); };
+  dialogActions['new'] = function () { state = emptyState(); touched = {}; closeDialog(); renderAll(true); window.scrollTo(0, 0); };
+  dialogActions.login = function () { closeDialog(); login(); };
+  function toggleMenu(show) { $('menu').hidden = !show; $('menuBtn').setAttribute('aria-expanded', String(show)); }
+  $('menuBtn').addEventListener('click', function (ev) { ev.stopPropagation(); toggleMenu($('menu').hidden); });
+  document.addEventListener('click', function (ev) { if (!$('menu').hidden && !ev.target.closest('#menu') && !ev.target.closest('#menuBtn')) toggleMenu(false); });
+  $('mClear').addEventListener('click', function () {
+    toggleMenu(false);
+    dialog('<h3>Neue Erfassung?</h3><p>Alle Kundendaten und Produkte dieser Erfassung werden gelöscht. Bereits gespeicherte Aufträge bleiben in Excel.</p><div class="acts"><button class="btn primary" data-act="new">Alles leeren</button><button class="btn" data-act="close">Abbrechen</button></div>');
+  });
+  $('mReload').addEventListener('click', function () { toggleMenu(false); loadMaster(true); });
+  // Muster-PDF: zeigt das Layout mit den aktuellen Eingaben (oder Beispieldaten), ohne etwas zu speichern
+  $('mPreview').addEventListener('click', function () {
+    toggleMenu(false);
+    var saved = state.elements, cust = state.customer;
+    try {
+      if (!state.elements.length) {
+        state.elements = [
+          { id: 'm1', zimmer: 'Schlafzimmer', zusatz: 'links', produkt: master.produkte[0].name, farbe: master.farben[0], breite: '120', hoehe: '140', tiefe: '5', bem: '' },
+          { id: 'm2', zimmer: 'Küche', zusatz: '', produkt: master.produkte[0].name, farbe: master.farben[0], breite: '80', hoehe: '120', tiefe: '', bem: 'Fenstergriff beachten' },
+          { id: 'm3', zimmer: 'Büro', zusatz: 'Büro 2', produkt: master.produkte[0].name, farbe: master.farben[0], breite: '73', hoehe: '118', tiefe: '', bem: '' }
+        ];
+        if (!trimmed(cust.nachname)) cust = { vorname: 'Anna', nachname: 'Muster', strasse: 'Musterweg 12', plz: '8000', ort: 'Zürich', telefon: '079 123 45 67' };
+      }
+      var blob = makePdf({ orderNo: 'MUSTER', kind: 'offerte', dateText: dateCH(new Date()), customer: cust, positions: positions(), totals: totals() });
+      var blob2 = makePdf({ orderNo: 'MUSTER', kind: 'direkt', dateText: dateCH(new Date()), customer: cust, positions: positions(), totals: totals() });
+      state.elements = saved;
+      lastPreview = [URL.createObjectURL(blob), URL.createObjectURL(blob2)];
+      dialog('<h3>Muster-PDF</h3><p>So sehen die Dokumente aus. Firmenangaben und Texte folgen noch.</p><div class="acts">' +
+        '<a class="btn primary" href="' + lastPreview[0] + '" target="_blank" rel="noopener">Muster-Offerte öffnen</a>' +
+        '<a class="btn" href="' + lastPreview[1] + '" target="_blank" rel="noopener">Muster-Kaufvertrag öffnen</a>' +
+        '<button class="btn" data-act="close">Schliessen</button></div>');
+    } catch (e) {
+      state.elements = saved;
+      dialog('<h3>PDF-Fehler</h3><div class="err-box">' + esc(e.message || String(e)) + '</div><div class="acts"><button class="btn primary" data-act="close">OK</button></div>');
+    }
+  });
+  var lastPreview = null;
+  $('mLogout').addEventListener('click', function () { toggleMenu(false); logout(); });
+
+  // ================= Anmeldung (Microsoft) =================
+  var msalApp = null, account = null, authError = '';
+  function configured() { return !!(CONFIG.clientId && CONFIG.tenantId); }
+  function renderAuth() {
+    var btn = $('acctBtn');
+    if (!configured()) { btn.textContent = 'Testmodus'; btn.className = 'acct off'; }
+    else if (account) { var n = (account.name || account.username || '').split(' ')[0]; btn.textContent = n || 'Angemeldet'; btn.className = 'acct on'; }
+    else { btn.textContent = 'Anmelden'; btn.className = 'acct off'; }
+    $('setupNotice').hidden = configured();
+    $('loginNotice').hidden = !configured() || !!account;
+    $('mLogout').hidden = !account;
+    $('mInfo').textContent = account ? 'Angemeldet als ' + (account.username || '') : (authError ? 'Anmeldefehler: ' + authError : '');
+  }
+  async function initAuth() {
+    if (!configured() || !window.msal) { renderAuth(); return; }
+    try {
+      msalApp = new msal.PublicClientApplication({
+        auth: { clientId: CONFIG.clientId, authority: 'https://login.microsoftonline.com/' + CONFIG.tenantId, redirectUri: location.origin + location.pathname, navigateToLoginRequestUrl: false },
+        cache: { cacheLocation: 'localStorage' }
+      });
+      await msalApp.initialize();
+      var res = await msalApp.handleRedirectPromise();
+      account = (res && res.account) || msalApp.getAllAccounts()[0] || null;
+      if (account) msalApp.setActiveAccount(account);
+    } catch (e) { authError = e.message || String(e); }
+    renderAuth();
+    if (account) loadMaster(false);
+  }
+  function login() { if (!msalApp) { renderAuth(); return; } save(); msalApp.loginRedirect({ scopes: CONFIG.scopes, prompt: 'select_account' }); }
+  function logout() { if (!msalApp || !account) return; save(); msalApp.logoutRedirect({ account: account, postLogoutRedirectUri: location.origin + location.pathname }); }
+  $('loginBtn').addEventListener('click', login);
+  $('acctBtn').addEventListener('click', function () { if (configured() && !account) login(); else toggleMenu($('menu').hidden); });
+  async function token() {
+    if (!msalApp || !account) throw new Error('Nicht angemeldet');
+    try { var r = await msalApp.acquireTokenSilent({ scopes: CONFIG.scopes, account: account }); return r.accessToken; }
+    catch (e) {
+      if (e instanceof msal.InteractionRequiredAuthError) { save(); await msalApp.acquireTokenRedirect({ scopes: CONFIG.scopes, account: account }); }
+      throw e;
+    }
+  }
+
+  // ================= Microsoft Graph =================
+  function encPath(p) { return p.split('/').map(encodeURIComponent).join('/'); }
+  async function graph(method, path, body, contentType) {
+    var t = await token();
+    var headers = { Authorization: 'Bearer ' + t };
+    var payload;
+    if (body !== undefined) {
+      if (contentType) { headers['Content-Type'] = contentType; payload = body; }
+      else { headers['Content-Type'] = 'application/json'; payload = JSON.stringify(body); }
+    }
+    var r = await fetch('https://graph.microsoft.com/v1.0' + path, { method: method, headers: headers, body: payload });
+    if (!r.ok) {
+      var msg = 'Fehler ' + r.status;
+      try { var j = await r.json(); if (j.error) msg += ': ' + (j.error.message || j.error.code); } catch (e) { /* kein JSON */ }
+      var err = new Error(msg); err.status = r.status; throw err;
+    }
+    if (r.status === 204) return null;
+    return r.json();
+  }
+  var wbId = null;
+  async function workbookId() {
+    if (wbId) return wbId;
+    var it = await graph('GET', '/me/drive/root:/' + encPath(CONFIG.basePath + '/' + CONFIG.workbook));
+    wbId = it.id; return wbId;
+  }
+  async function tableRows(name) {
+    var id = await workbookId();
+    var res = await graph('GET', '/me/drive/items/' + id + '/workbook/tables/' + name + '/rows');
+    return (res.value || []).map(function (r) { return r.values[0]; });
+  }
+  async function addRows(name, rows) {
+    var id = await workbookId();
+    return graph('POST', '/me/drive/items/' + id + '/workbook/tables/' + name + '/rows', { index: null, values: rows });
+  }
+
+  async function loadMaster(showResult) {
+    try {
+      var prod = await tableRows('tblProdukte'), farb = await tableRows('tblFarben'), zim = await tableRows('tblZimmer');
+      var produkte = prod.filter(function (r) { return trimmed(r[0]) && String(r[2] || 'Ja').toLowerCase() !== 'nein'; })
+        .map(function (r) { return { name: trimmed(r[0]), preis: Number(r[1]) }; }).filter(function (p) { return isFinite(p.preis) && p.preis > 0; });
+      var farben = farb.map(function (r) { return trimmed(r[0]); }).filter(Boolean);
+      var zimmer = zim.map(function (r) { return trimmed(r[0]); }).filter(Boolean);
+      if (!produkte.length || !farben.length || !zimmer.length) throw new Error('Stammdaten in Excel sind leer');
+      master = { produkte: produkte, farben: farben, zimmer: zimmer, source: 'Excel', loadedAt: new Date().toLocaleString('de-CH', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) };
+      store(KEY_MASTER, master); fillSelects(); renderAll(true);
+      if (showResult) dialog('<h3>Aktualisiert</h3><p>' + produkte.length + ' Produkte, ' + farben.length + ' Farben und ' + zimmer.length + ' Zimmer aus Excel geladen.</p><div class="acts"><button class="btn primary" data-act="close">OK</button></div>');
+    } catch (e) {
+      if (showResult) dialog('<h3>Laden nicht möglich</h3><div class="err-box">' + esc(e.message) + '</div><p>Die App verwendet die zuletzt geladenen Werte.</p><div class="acts"><button class="btn primary" data-act="close">OK</button></div>');
+    }
+  }
+
+  // ================= PDF =================
+  function makePdf(o) {
+    var J = window.jspdf.jsPDF, doc = new J({ unit: 'mm', format: 'a4' });
+    var L = 20, R = 190, y = 22, isK = o.kind === 'direkt';
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.setTextColor(29, 122, 82); doc.text(CONFIG.company, L, y);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(110, 120, 115);
+    doc.text('Insektenschutz · Firmenadresse und Kontakt folgen', L, y + 6);
+    doc.setTextColor(22, 32, 27); doc.setFontSize(10.5);
+    var c = o.customer; y = 50;
+    [[c.vorname, c.nachname].filter(Boolean).join(' '), c.strasse, [c.plz, c.ort].filter(Boolean).join(' ')].filter(function (x) { return trimmed(x); })
+      .forEach(function (line, i) { doc.text(line, L, y + i * 5.2); });
+    doc.setFontSize(9.5); doc.setTextColor(110, 120, 115);
+    doc.text('Auftragsnr.', 135, 50); doc.text('Datum', 135, 55.2); if (trimmed(c.telefon)) doc.text('Telefon', 135, 60.4);
+    doc.setTextColor(22, 32, 27);
+    doc.text(o.orderNo, R, 50, { align: 'right' }); doc.text(o.dateText, R, 55.2, { align: 'right' }); if (trimmed(c.telefon)) doc.text(trimmed(c.telefon), R, 60.4, { align: 'right' });
+    y = 82; doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
+    doc.text((isK ? 'Kaufvertrag / Auftragsbestätigung ' : 'Offerte ') + o.orderNo, L, y);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+    doc.text(isK ? 'Bestellte Insektenschutz-Elemente gemäss Aufmass vom ' + o.dateText + ':' : 'Insektenschutz-Elemente gemäss Aufmass vom ' + o.dateText + ':', L, y + 7);
+    var body = o.positions.map(function (p) {
+      var masse = fmt2.format(p.breite).replace(/\.00$/, '') + ' × ' + fmt2.format(p.hoehe).replace(/\.00$/, '') + (p.tiefe != null ? '\nTiefe ' + fmt2.format(p.tiefe).replace(/\.00$/, '') : '');
+      return [String(p.pos), p.bereich + (p.bem ? '\n' + p.bem : ''), p.produkt + '\n' + p.farbe, masse, fmt2.format(p.area), fmt2.format(p.preisM2), fmt2.format(p.price)];
+    });
+    doc.autoTable({
+      startY: y + 11, margin: { left: L, right: 210 - R },
+      head: [['Pos', 'Bereich', 'Produkt / Farbe', 'B × H cm', 'm²', 'CHF/m²', 'Betrag CHF']],
+      body: body,
+      foot: [['', 'Total', '', '', fmt2.format(o.totals.area), '', fmt2.format(o.totals.total)]],
+      styles: { font: 'helvetica', fontSize: 9, cellPadding: 2.2, valign: 'top', textColor: [22, 32, 27], lineColor: [216, 224, 219], lineWidth: 0.1 },
+      headStyles: { fillColor: [29, 122, 82], textColor: 255, fontStyle: 'bold' },
+      footStyles: { fillColor: [226, 241, 233], textColor: [22, 32, 27], fontStyle: 'bold' },
+      columnStyles: { 0: { cellWidth: 10 }, 3: { halign: 'right', cellWidth: 22 }, 4: { halign: 'right', cellWidth: 14 }, 5: { halign: 'right', cellWidth: 17 }, 6: { halign: 'right', cellWidth: 22 } }
+    });
+    y = doc.lastAutoTable.finalY + 10;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+    doc.text('Gesamtbetrag CHF ' + fmt2.format(o.totals.total), R, y, { align: 'right' });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(110, 120, 115);
+    doc.text('Masse in cm, Fläche = Breite × Höhe ÷ 10\'000 ohne Aufrundung.', L, y + 7);
+    if (isK) {
+      var sy = Math.max(y + 30, 230);
+      if (sy > 270) { doc.addPage(); sy = 40; }
+      doc.setDrawColor(150, 160, 155); doc.setTextColor(22, 32, 27); doc.setFontSize(9.5);
+      doc.line(L, sy, L + 50, sy); doc.line(L + 60, sy, L + 110, sy); doc.line(L + 120, sy, R, sy);
+      doc.text('Ort, Datum', L, sy + 5); doc.text('Unterschrift Kunde', L + 60, sy + 5); doc.text('Unterschrift ' + CONFIG.company, L + 120, sy + 5);
+    }
+    var pages = doc.getNumberOfPages();
+    for (var i = 1; i <= pages; i++) {
+      doc.setPage(i); doc.setFontSize(8); doc.setTextColor(150, 160, 155);
+      doc.text('TESTVERSION – Firmenangaben, Bedingungen und Texte folgen.', L, 287);
+      doc.text('Seite ' + i + ' / ' + pages, R, 287, { align: 'right' });
+    }
+    return doc.output('blob');
+  }
+
+  // ================= Abschluss & Speichern =================
+  var busy = false, lastPdf = null;
+  function startClose(kind) {
+    var warn = [];
+    custMissing().forEach(function (m) { warn.push(m + ' fehlt'); });
+    if (!state.elements.length) warn.push('Noch keine Produkte erfasst');
+    var bad = state.elements.filter(function (e) { return missing(e).length; });
+    if (bad.length) warn.push(bad.length + (bad.length === 1 ? ' Produkt ist' : ' Produkte sind') + ' unvollständig');
+    if (state.editId) warn.push('Ein Produkt ist noch in Bearbeitung (nicht gespeichert)');
+    else if (formHasInput(state.form)) warn.push('Im Formular steht ein angefangenes Produkt, das noch nicht hinzugefügt ist');
+    if (!state.elements.length) {
+      dialog('<h3>Keine Produkte</h3><p>Erfasse zuerst mindestens ein Produkt.</p><div class="acts"><button class="btn primary" data-act="close">OK</button></div>');
+      return;
+    }
+    if (warn.length) {
+      dialogActions.force = function () { confirmClose(kind); };
+      dialog('<h3>Noch nicht vollständig</h3><ul>' + warn.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul><p>Du kannst ergänzen oder trotzdem abschliessen.</p>' +
+        '<div class="acts"><button class="btn" data-act="close">Zurück und ergänzen</button><button class="btn primary" data-act="force">Trotzdem abschliessen</button></div>');
+    } else { confirmClose(kind); }
+  }
+  function confirmClose(kind) {
+    if (!configured()) {
+      dialog('<h3>Speichern noch nicht möglich</h3><p>Die Verbindung zu deinem Microsoft-Konto ist noch nicht eingerichtet. Deine Erfassung bleibt auf diesem Gerät erhalten.</p><div class="acts"><button class="btn primary" data-act="close">OK</button></div>');
+      return;
+    }
+    if (!account) {
+      dialog('<h3>Bitte anmelden</h3><p>Zum Speichern musst du einmal mit deinem FlyGuard-Konto angemeldet sein. Deine Erfassung bleibt erhalten.</p><div class="acts"><button class="btn primary" data-act="login">Jetzt anmelden</button><button class="btn" data-act="close">Abbrechen</button></div>');
+      return;
+    }
+    var t = totals(), doc = kind === 'direkt' ? 'Kaufvertrag' : 'Offerte';
+    dialogActions.go = function () { runSave(kind); };
+    dialog('<h3>' + doc + ' erstellen?</h3><div class="doc"><span><b>' + esc([state.customer.vorname, state.customer.nachname].filter(Boolean).join(' ') || 'Ohne Namen') + '</b></span><span>' + t.count + ' Produkte · ' + fmt2.format(t.area) + ' m²</span><span>Total CHF ' + fmt2.format(t.total) + '</span></div>' +
+      '<p>Die App vergibt die Auftragsnummer, erstellt das PDF, legt es in OneDrive ab und trägt den Auftrag ins Büro-Excel ein.</p>' +
+      '<div class="acts"><button class="btn primary" data-act="go">' + doc + ' erstellen und speichern</button><button class="btn" data-act="close">Abbrechen</button></div>');
+  }
+  var STEPS = ['Auftragsnummer vergeben', 'PDF erstellen', 'In OneDrive ablegen', 'Ins Büro-Excel eintragen'];
+  function showSteps(active, failMsg) {
+    var html = '<h3>Speichern …</h3><ul class="steps">' + STEPS.map(function (s, i) {
+      var cls = i < active ? 'done' : (i === active ? (failMsg ? 'fail' : 'run') : '');
+      return '<li class="' + cls + '">' + esc(s) + '</li>';
+    }).join('') + '</ul>';
+    if (failMsg) html += '<div class="err-box">' + esc(failMsg) + '</div><p>Nichts ist verloren: Deine Erfassung ist noch da. Du kannst es nochmals versuchen.</p><div class="acts"><button class="btn primary" data-act="retry">Nochmals versuchen</button><button class="btn" data-act="close">Schliessen</button></div>';
+    dialog(html);
+  }
+
+  async function runSave(kind) {
+    if (busy) return; busy = true;
+    dialogActions.retry = function () { runSave(kind); };
+    var step = 0;
+    try {
+      showSteps(0);
+      var now = state.pending && state.pending.dateIso ? new Date(state.pending.dateIso) : new Date();
+      var p = state.pending && state.pending.kind === kind ? state.pending : { kind: kind, dateIso: now.toISOString() };
+      var rows = await tableRows('tblAuftraege');
+      var existing = rows.filter(function (r) { return r[34] === state.captureId; })[0];
+      if (existing) {
+        busy = false; finished({ orderNo: existing[0], kind: kind, fileUrl: existing[16], folderUrl: existing[17], already: true });
+        return;
+      }
+      if (!p.orderNo) {
+        var year = now.getFullYear(), max = 0;
+        rows.forEach(function (r) { if (Number(r[1]) === year && Number(r[2]) > max) max = Number(r[2]); });
+        p.year = year; p.laufNr = max + 1; p.orderNo = year + '-' + p.laufNr;
+      }
+      state.pending = p; save();
+
+      step = 1; showSteps(1);
+      var pos = positions(), tt = totals(), c = state.customer;
+      var order = { orderNo: p.orderNo, kind: kind, dateText: dateCH(now), customer: c, positions: pos, totals: tt };
+      var pdf = makePdf(order);
+      var docName = kind === 'direkt' ? 'Kaufvertrag' : 'Offerte';
+      var person = safeName([c.nachname, c.vorname].filter(Boolean).join(' ')) || 'Kunde';
+      var fileName = docName + '_' + p.orderNo + '_' + person.replace(/ /g, '_') + '.pdf';
+
+      step = 2; showSteps(2);
+      if (!p.folderId) {
+        var base = '/me/drive/root:/' + encPath(CONFIG.basePath) + ':/children';
+        try { await graph('POST', base, { name: CONFIG.ordersFolder, folder: {}, '@microsoft.graph.conflictBehavior': 'fail' }); }
+        catch (e) { if (e.status !== 409) throw e; }
+        var folder = await graph('POST', '/me/drive/root:/' + encPath(CONFIG.basePath + '/' + CONFIG.ordersFolder) + ':/children',
+          { name: safeName(p.orderNo + ' ' + person), folder: {}, '@microsoft.graph.conflictBehavior': 'rename' });
+        p.folderId = folder.id; p.folderUrl = folder.webUrl; state.pending = p; save();
+      }
+      var file = await graph('PUT', '/me/drive/items/' + p.folderId + ':/' + encodeURIComponent(fileName) + ':/content', pdf, 'application/pdf');
+      p.fileUrl = file.webUrl; state.pending = p; save();
+
+      step = 3; showSteps(3);
+      var serial = excelDate(now);
+      var orderRow = [p.orderNo, p.year, p.laufNr, serial, kind === 'direkt' ? 'Direktbestellung' : 'Offerte',
+        trimmed(c.vorname), trimmed(c.nachname), trimmed(c.strasse), trimmed(c.plz), trimmed(c.ort), trimmed(c.telefon), trimmed(c.email),
+        tt.count, tt.area, tt.total, docName, p.fileUrl, p.folderUrl,
+        kind === 'direkt' ? 'Keine Offerte – Direktbestellung' : 'Offen', '', 'Noch nicht bestellt', '', '',
+        'Ausstehend', '', '', '', '', '', '', '', '', '', '', state.captureId];
+      var posRows = pos.map(function (q) {
+        return [p.orderNo, q.pos, q.zimmer, q.zusatz, q.bereich, q.produkt, q.farbe, q.breite, q.hoehe, q.tiefe == null ? '' : q.tiefe, q.area, q.preisM2, q.price, q.bem];
+      });
+      await addRows('tblPositionen', posRows);
+      await addRows('tblAuftraege', [orderRow]);
+      lastPdf = { blob: pdf, name: fileName };
+      busy = false;
+      finished({ orderNo: p.orderNo, kind: kind, fileUrl: p.fileUrl, folderUrl: p.folderUrl, name: [c.vorname, c.nachname].filter(Boolean).join(' '), totals: tt });
+    } catch (e) {
+      busy = false;
+      if (e && e.errorCode === 'interaction_in_progress') return;
+      showSteps(step, (e && e.message) || String(e));
+    }
+  }
+  function finished(r) {
+    var doc = r.kind === 'direkt' ? 'Kaufvertrag' : 'Offerte';
+    state = emptyState(); touched = {}; renderAll(true); window.scrollTo(0, 0);
+    dialogActions.share = function () {
+      if (!lastPdf) return;
+      var f = new File([lastPdf.blob], lastPdf.name, { type: 'application/pdf' });
+      if (navigator.canShare && navigator.canShare({ files: [f] })) { navigator.share({ files: [f], title: lastPdf.name }).catch(function () { }); }
+      else if (r.fileUrl) { window.open(r.fileUrl, '_blank'); }
+    };
+    dialog('<div class="ok-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>' +
+      '<h3>Gespeichert: ' + esc(r.orderNo) + '</h3>' +
+      (r.already ? '<p>Dieser Auftrag war bereits gespeichert. Es wurde nichts doppelt angelegt.</p>' :
+        '<div class="doc"><span><b>' + esc(r.name || 'Ohne Namen') + '</b></span><span>' + doc + ' · ' + r.totals.count + ' Produkte · ' + fmt2.format(r.totals.area) + ' m²</span><span>Total CHF ' + fmt2.format(r.totals.total) + '</span></div>' +
+        '<p>Das PDF liegt in OneDrive, der Auftrag steht im Büro-Excel. Die Eingabe ist für den nächsten Kunden geleert.</p>') +
+      '<div class="acts">' + (lastPdf && !r.already ? '<button class="btn primary" data-act="share">PDF an Kunden senden …</button>' : '') +
+      (r.fileUrl ? '<a class="btn" href="' + esc(r.fileUrl) + '" target="_blank" rel="noopener">PDF in OneDrive öffnen</a>' : '') +
+      '<button class="btn" data-act="close">Fertig</button></div>');
+  }
+  $('btnOfferte').addEventListener('click', function () { startClose('offerte'); });
+  $('btnDirekt').addEventListener('click', function () { startClose('direkt'); });
+
+  // ================= Start =================
+  var today = dateCH(new Date());
+  $('aufmassDatum').textContent = today; $('dateLine').textContent = 'Aufmass vom ' + today;
+  state = restore(KEY_STATE);
+  if (!state || !Array.isArray(state.elements) || !state.form) state = emptyState();
+  fillSelects();
+  renderAll(true);
+  initAuth();
+})();
+</script>
+</body>
+</html>
