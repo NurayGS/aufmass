@@ -84,6 +84,7 @@ a { color: var(--accent); }
 .toggle .h2 { display: block; font-family: var(--font-num); font-size: 20px; font-weight: 600; }
 .toggle .sum { display: block; font-size: 14px; color: var(--muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .toggle .grow { flex: 1; min-width: 0; }
+.toggle .warn-t { color: var(--warn); font-weight: 500; }
 .chev { width: 22px; height: 22px; color: var(--muted); transition: transform .2s; flex: none; }
 .open .chev { transform: rotate(180deg); }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -213,22 +214,21 @@ textarea.in { min-height: 64px; resize: vertical; }
   <!-- 1. Kundendaten -->
   <section class="card" id="custCard">
     <button class="toggle" id="custToggle" aria-expanded="true" aria-controls="custBody">
-      <span class="grow"><span class="h2" role="heading" aria-level="2"><span class="step">1.</span> Kundendaten</span><span class="sum" id="custSum">Name, Adresse, Telefon, E-Mail und Datum</span></span>
-      <span class="badge warn" id="custBadge" hidden></span>
+      <span class="grow"><span class="h2" role="heading" aria-level="2"><span class="step">1.</span> Kundendaten</span><span class="sum" id="custSum">Name, Adresse, Telefon, E-Mail und Datum</span><span class="sum warn-t" id="custWarn" hidden></span></span>
       <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
     </button>
     <div class="card-b" id="custBody">
       <div class="grid2">
-        <div class="field"><label for="vorname">Vorname</label><input class="in" id="vorname" autocomplete="off" autocapitalize="words"></div>
-        <div class="field"><label for="nachname">Nachname</label><input class="in" id="nachname" autocomplete="off" autocapitalize="words"></div>
+        <div class="field"><label for="vorname">Vorname</label><input class="in" id="vorname" autocomplete="off" autocapitalize="words" enterkeyhint="next"></div>
+        <div class="field"><label for="nachname">Nachname</label><input class="in" id="nachname" autocomplete="off" autocapitalize="words" enterkeyhint="next"></div>
       </div>
-      <div class="field"><label for="strasse">Strasse und Nr.</label><input class="in" id="strasse" autocomplete="off" autocapitalize="words"></div>
+      <div class="field"><label for="strasse">Strasse und Nr.</label><input class="in" id="strasse" autocomplete="off" autocapitalize="words" enterkeyhint="next"></div>
       <div class="grid-plz">
-        <div class="field"><label for="plz">PLZ</label><input class="in" id="plz" inputmode="numeric" autocomplete="off" maxlength="6"></div>
-        <div class="field"><label for="ort">Ort</label><input class="in" id="ort" autocomplete="off" autocapitalize="words"></div>
+        <div class="field"><label for="plz">PLZ</label><input class="in" id="plz" inputmode="numeric" autocomplete="off" maxlength="6" enterkeyhint="next"></div>
+        <div class="field"><label for="ort">Ort</label><input class="in" id="ort" autocomplete="off" autocapitalize="words" enterkeyhint="next"></div>
       </div>
-      <div class="field"><label for="telefon">Telefon</label><input class="in" id="telefon" type="tel" inputmode="tel" autocomplete="off"></div>
-      <div class="field"><label for="email">E-Mail <i>(optional)</i></label><input class="in" id="email" type="email" inputmode="email" autocomplete="off" autocapitalize="off"></div>
+      <div class="field"><label for="telefon">Telefon</label><input class="in" id="telefon" type="tel" inputmode="tel" autocomplete="off" enterkeyhint="next"></div>
+      <div class="field"><label for="email">E-Mail <i>(optional)</i></label><input class="in" id="email" type="email" inputmode="email" autocomplete="off" autocapitalize="off" enterkeyhint="done"></div>
       <div class="meta"><span>Aufmassdatum <b id="aufmassDatum"></b></span><span>Auftragsnr. <b>wird beim Speichern vergeben</b></span></div>
     </div>
   </section>
@@ -241,7 +241,7 @@ textarea.in { min-height: 64px; resize: vertical; }
         <div class="pform-h"><b id="formTitle">Neues Produkt</b></div>
         <div class="grid2">
           <div class="field"><label for="fZimmer">Zimmer / Bereich</label><select class="in" id="fZimmer"></select></div>
-          <div class="field"><label for="fZusatz" id="fZusatzLbl">Zusatzbezeichnung</label><input class="in" id="fZusatz" placeholder="z. B. Büro 2" autocomplete="off"></div>
+          <div class="field"><label for="fZusatz" id="fZusatzLbl">Zusatzbezeichnung</label><input class="in" id="fZusatz" placeholder="z. B. Büro 2" autocomplete="off" enterkeyhint="next"></div>
         </div>
         <div class="hint" id="hZusatz"></div>
         <div class="grid2">
@@ -400,13 +400,34 @@ textarea.in { min-height: 64px; resize: vertical; }
     var name = [c.vorname, c.nachname].filter(Boolean).join(' ');
     var parts = [name, c.ort].filter(function (x) { return trimmed(x); });
     $('custSum').textContent = parts.length ? parts.join(' · ') : 'Name, Adresse, Telefon, E-Mail und Datum';
-    var miss = custMissing(), badge = $('custBadge');
-    if (miss.length && parts.length) { badge.hidden = false; badge.textContent = miss.join(', ') + ' fehlt'; } else { badge.hidden = true; }
+    var miss = custMissing(), warn = $('custWarn');
+    if (miss.length && parts.length) { warn.hidden = false; warn.textContent = 'Fehlt noch: ' + miss.join(', '); } else { warn.hidden = true; }
     $('custCard').classList.toggle('open', state.custOpen);
     $('custBody').hidden = !state.custOpen;
     $('custToggle').setAttribute('aria-expanded', String(state.custOpen));
   }
   CUST_FIELDS.forEach(function (f) { $(f).addEventListener('input', function () { state.customer[f] = this.value; renderCustomer(); save(); }); });
+
+  // Eingabetaste (↵) springt ins nächste Feld. Bereits ausgefüllte Auswahllisten werden übersprungen.
+  var NEXT_ORDER = ['vorname', 'nachname', 'strasse', 'plz', 'ort', 'telefon', 'email', null,
+    'fZimmer', 'fZusatz', 'fProdukt', 'fFarbe', 'fBreite', 'fHoehe', 'fTiefe', null];
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key !== 'Enter' || ev.isComposing) return;
+    var el = ev.target;
+    if (!el || el.tagName !== 'INPUT') return;
+    var i = NEXT_ORDER.indexOf(el.id);
+    if (i < 0) return;
+    ev.preventDefault();
+    for (var j = i + 1; j < NEXT_ORDER.length; j++) {
+      var id = NEXT_ORDER[j];
+      if (id === null) break;
+      var nx = $(id);
+      if (nx.tagName === 'SELECT' && nx.value) continue;
+      nx.focus();
+      return;
+    }
+    el.blur();
+  });
   $('custToggle').addEventListener('click', function () { state.custOpen = !state.custOpen; renderCustomer(); save(); });
 
   // ================= Produkt-Formular =================
