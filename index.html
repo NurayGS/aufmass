@@ -249,6 +249,7 @@ textarea.in { min-height: 64px; resize: vertical; }
           <div class="field"><label for="fProdukt">Produkt</label><select class="in" id="fProdukt"></select></div>
           <div class="field"><label for="fFarbe">Farbe</label><select class="in" id="fFarbe"></select></div>
         </div>
+        <div class="field" id="farbeTextWrap" hidden><label for="fFarbeText">Farbwunsch des Kunden</label><input class="in" id="fFarbeText" placeholder="z. B. RAL 7016, Braun, Bronze" autocomplete="off" enterkeyhint="next"></div>
         <div class="grid3">
           <div class="field"><label for="fBreite">Breite</label><div class="unit"><input class="in" id="fBreite" inputmode="decimal" autocomplete="off" placeholder="0"><span>cm</span></div></div>
           <div class="field"><label for="fHoehe">Höhe</label><div class="unit"><input class="in" id="fHoehe" inputmode="decimal" autocomplete="off" placeholder="0"><span>cm</span></div></div>
@@ -280,7 +281,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       <div class="kv"><span>Produkte</span><span class="v" id="sCount">0</span></div>
       <div class="kv"><span>Gesamtfläche</span><span class="v" id="sArea">0.00 m²</span></div>
       <div class="kv total"><span>Gesamtpreis</span><span class="v" id="sTotal">CHF 0.00</span></div>
-      <div class="fine">Mindestpreis pro Produkt: Regel noch offen, hier noch nicht berücksichtigt.</div>
+      <div class="fine">Preise nach Preisraster (Fenster / Balkontür), Masse für den Preis auf 10 cm aufgerundet.</div>
     </div>
   </section>
 
@@ -313,15 +314,23 @@ textarea.in { min-height: 64px; resize: vertical; }
     company: 'FlyGuard',
     scopes: ['User.Read', 'Files.ReadWrite']
   };
+  // Ersatzwerte, falls Excel noch nicht geladen ist (gleiche Regeln wie im Blatt «Preisraster»)
+  function makeGrid(widths, heights, fn) { return { widths: widths, heights: heights, cells: heights.map(function (h) { return widths.map(function (w) { return Math.round(fn(w, h) / 5) * 5; }); }) }; }
+  function range(a, b) { var r = []; for (var x = a; x <= b; x += 10) r.push(x); return r; }
   var DEFAULTS = {
     zimmer: ['Schlafzimmer', 'Wohnzimmer', 'Esszimmer', 'Küche', 'WC', 'Badezimmer', 'Büro', 'Gamingzimmer', 'Sonstiges'],
-    produkte: [{ name: 'Produkt 1', preis: 290.23 }, { name: 'Produkt 2', preis: 290.23 }, { name: 'Produkt 3', preis: 290.23 }, { name: 'Produkt 4', preis: 290.23 }],
-    farben: ['Farbe 1', 'Farbe 2', 'Farbe 3']
+    produkte: [{ name: 'Produkt 1', beschreibung: '' }, { name: 'Produkt 2', beschreibung: '' }, { name: 'Produkt 3', beschreibung: '' }, { name: 'Produkt 4', beschreibung: '' }],
+    farben: ['Weiss', 'Anthrazit', 'Sonstige'],
+    regeln: { fenster: { abHoehe: 0, aufB: 20, aufH: 15, rund: 5 }, tuer: { abHoehe: 200, aufB: 37.5, aufH: 15, rund: 5 } },
+    raster: {
+      fenster: makeGrid(range(70, 150), range(100, 190), function (w, h) { return 200 + 20 * (w - 70) / 10 + 15 * (h - 100) / 10; }),
+      tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
+    }
   };
-  var APP_VERSION = '11.11.2026 · 3';
-  var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v1';
-  var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'breite', 'hoehe', 'tiefe', 'bem'];
-  var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
+  var APP_VERSION = '12.11.2026 · 4';
+  var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
+  var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'farbeText', 'breite', 'hoehe', 'tiefe', 'bem'];
+  var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
   var CUST_FIELDS = ['vorname', 'nachname', 'strasse', 'plz', 'ort', 'telefon', 'email'];
 
   // ================= Hilfsfunktionen =================
@@ -347,23 +356,46 @@ textarea.in { min-height: 64px; resize: vertical; }
   }
 
   // ================= Stammdaten =================
-  var master = restore(KEY_MASTER) || { zimmer: DEFAULTS.zimmer, produkte: DEFAULTS.produkte, farben: DEFAULTS.farben, source: 'Platzhalter', loadedAt: null };
-  function preisFor(name) { for (var i = 0; i < master.produkte.length; i++) if (master.produkte[i].name === name) return master.produkte[i].preis; return null; }
+  var master = restore(KEY_MASTER);
+  if (!master || !master.raster || !master.regeln) master = { zimmer: DEFAULTS.zimmer, produkte: DEFAULTS.produkte, farben: DEFAULTS.farben, regeln: DEFAULTS.regeln, raster: DEFAULTS.raster, source: 'Platzhalter', loadedAt: null };
+  function beschreibungFor(name) { for (var i = 0; i < master.produkte.length; i++) if (master.produkte[i].name === name) return master.produkte[i].beschreibung || ''; return ''; }
+  function farbeLabel(e) { return e.farbe === 'Sonstige' ? (trimmed(e.farbeText) || 'Sonstige') : (e.farbe || ''); }
   function bereich(e) { var z = e.zimmer || '', zu = trimmed(e.zusatz); if (!z || z === 'Sonstiges') return zu; return zu ? z + ', ' + zu : z; }
+
+  // Preis aus dem Raster: Masse auf 10 cm aufrunden, ab «Ab Höhe» der Balkontür gilt das Tür-Raster.
+  // Kleiner als das erste Feld = Startpreis. Grösser als das Raster = mit den Aufpreisen weiterrechnen (Hinweis).
+  function rasterPrice(bVal, hVal) {
+    var bR = Math.ceil(bVal / 10 - 1e-9) * 10, hR = Math.ceil(hVal / 10 - 1e-9) * 10;
+    var isTuer = hR >= (master.regeln.tuer.abHoehe || 200);
+    var g = isTuer ? master.raster.tuer : master.raster.fenster, rg = isTuer ? master.regeln.tuer : master.regeln.fenster;
+    var W = g.widths, H = g.heights;
+    var bE = Math.max(bR, W[0]), hE = Math.max(hR, H[0]);
+    var ci = W.findIndex(function (w) { return w >= Math.min(bE, W[W.length - 1]); });
+    var ri = H.findIndex(function (x) { return x >= Math.min(hE, H[H.length - 1]); });
+    var base = (ri >= 0 && ci >= 0) ? Number(g.cells[ri][ci]) : NaN;
+    if (!isFinite(base)) return { art: isTuer ? 'Balkontür' : 'Fenster', feld: '', price: null, outside: false, error: 'Preis fehlt im Raster' };
+    var outW = bE > W[W.length - 1], outH = hE > H[H.length - 1];
+    var price = base;
+    if (outW || outH) {
+      price += (outW ? (bE - W[W.length - 1]) / 10 * rg.aufB : 0) + (outH ? (hE - H[H.length - 1]) / 10 * rg.aufH : 0);
+      price = Math.round(price / (rg.rund || 5)) * (rg.rund || 5);
+    }
+    return { art: isTuer ? 'Balkontür' : 'Fenster', feld: (outW ? bE : W[ci]) + ' × ' + (outH ? hE : H[ri]), price: price, outside: outW || outH };
+  }
   function calc(e) {
     var b = parseCm(e.breite), h = parseCm(e.hoehe);
     var area = (b.ok && h.ok) ? b.val * h.val / 10000 : null;
-    var p = preisFor(e.produkt);
-    var price = (area != null && p != null) ? area * p : null;
-    return { b: b, h: h, area: area, preis: p, price: price };
+    var r = (b.ok && h.ok) ? rasterPrice(b.val, h.val) : null;
+    return { b: b, h: h, area: area, r: r, price: r ? r.price : null };
   }
   function missing(e) {
     var c = calc(e), t = parseCm(e.tiefe), out = [];
     if (!e.zimmer) out.push('Zimmer');
     if (e.zimmer === 'Sonstiges' && !trimmed(e.zusatz)) out.push('Bezeichnung');
     if (!e.produkt) out.push('Produkt');
-    else if (preisFor(e.produkt) == null) out.push('Produkt (ohne Preis)');
     if (!e.farbe) out.push('Farbe');
+    else if (e.farbe === 'Sonstige' && !trimmed(e.farbeText)) out.push('Farbwunsch');
+    if (c.r && c.price == null) out.push('Preis (Raster prüfen)');
     if (!c.b.ok) out.push(c.b.empty ? 'Breite' : 'gültige Breite');
     if (!c.h.ok) out.push(c.h.empty ? 'Höhe' : 'gültige Höhe');
     if (!t.empty && !t.ok) out.push('gültige Tiefe');
@@ -382,7 +414,7 @@ textarea.in { min-height: 64px; resize: vertical; }
 
   // ================= Zustand =================
   var state = null;
-  function emptyForm(carry) { return { zimmer: '', zusatz: '', produkt: carry ? carry.produkt : '', farbe: carry ? carry.farbe : '', breite: '', hoehe: '', tiefe: '', bem: '' }; }
+  function emptyForm(carry) { return { zimmer: '', zusatz: '', produkt: carry ? carry.produkt : '', farbe: carry ? carry.farbe : '', farbeText: carry ? (carry.farbeText || '') : '', breite: '', hoehe: '', tiefe: '', bem: '' }; }
   function emptyState() { return { captureId: uid(), startedAt: new Date().toISOString(), custOpen: true, editId: null, stash: null, customer: {}, elements: [], form: emptyForm(null), pending: null }; }
   function save() { store(KEY_STATE, state); }
   function blankForm() { var last = state.elements.length ? state.elements[state.elements.length - 1] : null; return emptyForm(last); }
@@ -412,7 +444,7 @@ textarea.in { min-height: 64px; resize: vertical; }
 
   // Eingabetaste (↵) springt ins nächste Feld. Bereits ausgefüllte Auswahllisten werden übersprungen.
   var NEXT_ORDER = ['vorname', 'nachname', 'strasse', 'plz', 'ort', 'telefon', 'email', null,
-    'fZimmer', 'fZusatz', 'fProdukt', 'fFarbe', 'fBreite', 'fHoehe', 'fTiefe', null];
+    'fZimmer', 'fZusatz', 'fProdukt', 'fFarbe', 'fFarbeText', 'fBreite', 'fHoehe', 'fTiefe', null];
   document.addEventListener('keydown', function (ev) {
     if (ev.key !== 'Enter' && ev.keyCode !== 13) return;
     var el = ev.target;
@@ -424,6 +456,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       var id = NEXT_ORDER[j];
       if (id === null) break;
       var nx = $(id);
+      if (nx.offsetParent === null) continue;
       if (nx.tagName === 'SELECT' && nx.value) continue;
       nx.focus();
       return;
@@ -444,8 +477,10 @@ textarea.in { min-height: 64px; resize: vertical; }
     $('fFormula').textContent = c.area != null
       ? fmt2.format(c.b.val).replace(/\.00$/, '') + ' × ' + fmt2.format(c.h.val).replace(/\.00$/, '') + ' cm ÷ 10\'000, ohne Aufrundung'
       : 'Breite × Höhe ÷ 10\'000, ohne Aufrundung';
-    $('fPriceLbl').textContent = c.preis != null ? 'Preis (CHF ' + fmt2.format(c.preis) + '/m²)' : 'Preis';
-    $('fPrice').textContent = c.price != null ? 'CHF ' + fmt2.format(c.price) : '–';
+    $('farbeTextWrap').hidden = f.farbe !== 'Sonstige';
+    $('fPriceLbl').textContent = c.r ? (c.r.art + ', Rasterfeld ' + c.r.feld + (c.r.outside ? ' · ausserhalb Raster, bitte prüfen' : '')) : 'Preis';
+    $('fPriceLbl').style.color = c.r && c.r.outside ? 'var(--warn)' : '';
+    $('fPrice').textContent = c.price != null ? 'CHF ' + fmt2.format(c.price) : (c.r && c.r.error ? c.r.error : '–');
     var t = parseCm(f.tiefe), msgs = [];
     function mark(id, bad) { $(id).classList.toggle('err', !!bad); }
     var bBad = touched.breite && !c.b.empty && !c.b.ok, hBad = touched.hoehe && !c.h.empty && !c.h.ok, tBad = touched.tiefe && !t.empty && !t.ok;
@@ -491,7 +526,8 @@ textarea.in { min-height: 64px; resize: vertical; }
     $('list').innerHTML = state.elements.map(function (e, i) {
       var c = calc(e), miss = missing(e), name = bereich(e) || 'Ohne Bezeichnung';
       var sub = miss.length ? '<span class="sub w">⚠ Unvollständig: ' + esc(miss.join(', ')) + '</span>'
-        : '<span class="sub">' + esc([e.produkt, e.farbe].filter(Boolean).join(' · ')) + ' · ' + esc(e.breite) + ' × ' + esc(e.hoehe) + ' cm</span>';
+        : (c.r && c.r.outside ? '<span class="sub w">⚠ ausserhalb Raster · CHF ' + fmt2.format(c.price) + ' bitte prüfen</span>'
+        : '<span class="sub">' + esc([e.produkt, farbeLabel(e)].filter(Boolean).join(' · ')) + ' · ' + esc(e.breite) + ' × ' + esc(e.hoehe) + ' cm · CHF ' + fmt2.format(c.price) + '</span>');
       var m2 = c.area != null ? fmt2.format(c.area) + ' <small>m²</small>' : '<small>–</small>';
       return '<button class="row' + (e.id === state.editId ? ' active' : '') + '" data-id="' + e.id + '"><span class="num">' + (i + 1) + '</span>' +
         '<span class="txt"><span class="ttl">' + esc(name) + '</span>' + sub + '</span><span class="m2">' + m2 + '</span>' + ICON_CHEV + '</button>';
@@ -511,9 +547,10 @@ textarea.in { min-height: 64px; resize: vertical; }
     return state.elements.map(function (e, i) {
       var c = calc(e), t = parseCm(e.tiefe);
       var area = c.area != null ? round(c.area, 4) : null;
-      return { pos: i + 1, zimmer: e.zimmer, zusatz: trimmed(e.zusatz), bereich: bereich(e), produkt: e.produkt, farbe: e.farbe,
+      return { pos: i + 1, zimmer: e.zimmer, zusatz: trimmed(e.zusatz), bereich: bereich(e), produkt: e.produkt, beschreibung: beschreibungFor(e.produkt), farbe: farbeLabel(e),
         breite: c.b.ok ? c.b.val : null, hoehe: c.h.ok ? c.h.val : null, tiefe: t.ok ? t.val : null,
-        area: area, preisM2: c.preis, price: c.price != null ? round(c.price, 2) : null, bem: trimmed(e.bem) };
+        area: area, price: c.price != null ? round(c.price, 2) : null, bem: trimmed(e.bem),
+        art: c.r ? c.r.art : '', feld: c.r ? c.r.feld : '', outside: !!(c.r && c.r.outside) };
     });
   }
   function totals() {
@@ -524,7 +561,7 @@ textarea.in { min-height: 64px; resize: vertical; }
   function renderSummary() {
     var t = totals();
     $('sCount').textContent = t.count; $('sArea').textContent = fmt2.format(t.area) + ' m²'; $('sTotal').textContent = 'CHF ' + fmt2.format(t.total);
-    $('srcInfo').textContent = 'Preise und Listen: ' + (master.source === 'Excel' ? 'aus Excel, geladen ' + master.loadedAt : 'Platzhalter (noch nicht aus Excel geladen)') + ' · App-Version ' + APP_VERSION;
+    $('srcInfo').textContent = 'Preisraster und Listen: ' + (master.source === 'Excel' ? 'aus Excel, geladen ' + master.loadedAt : 'Standardwerte (noch nicht aus Excel geladen)') + ' · App-Version ' + APP_VERSION;
   }
   function renderAll(syncForm) { renderCustomer(); renderForm(syncForm); renderList(); renderSummary(); renderAuth(); save(); }
 
@@ -654,17 +691,41 @@ textarea.in { min-height: 64px; resize: vertical; }
     return graph('POST', '/me/drive/items/' + id + '/workbook/tables/' + name + '/rows', { index: null, values: rows });
   }
 
+  // Tabelle mit Spaltennamen lesen (Reihenfolge der Spalten im Excel ist dann egal)
+  async function tableData(name) {
+    var id = await workbookId();
+    var head = await graph('GET', '/me/drive/items/' + id + '/workbook/tables/' + name + '/headerRowRange');
+    return { headers: head.values[0].map(function (h) { return trimmed(h); }), rows: await tableRows(name) };
+  }
+  function col(t, name) { var i = t.headers.indexOf(name); if (i < 0) throw new Error('Spalte «' + name + '» fehlt'); return i; }
+  function readGrid(t, label) {
+    var widths = t.headers.slice(1).map(Number), heights = [], cells = [];
+    if (!widths.length || widths.some(function (w) { return !isFinite(w) || w <= 0; })) throw new Error('Kopfzeile im Raster ' + label + ' ungültig');
+    t.rows.forEach(function (r) { var h = Number(r[0]); if (isFinite(h) && h > 0) { heights.push(h); cells.push(r.slice(1).map(Number)); } });
+    if (!heights.length) throw new Error('Raster ' + label + ' ist leer');
+    return { widths: widths, heights: heights, cells: cells };
+  }
   async function loadMaster(showResult) {
     try {
-      var prod = await tableRows('tblProdukte'), farb = await tableRows('tblFarben'), zim = await tableRows('tblZimmer');
-      var produkte = prod.filter(function (r) { return trimmed(r[0]) && String(r[2] || 'Ja').toLowerCase() !== 'nein'; })
-        .map(function (r) { return { name: trimmed(r[0]), preis: Number(r[1]) }; }).filter(function (p) { return isFinite(p.preis) && p.preis > 0; });
+      var prod = await tableData('tblProdukte'), farb = await tableRows('tblFarben'), zim = await tableRows('tblZimmer');
+      var reg = await tableData('tblPreisregeln'), rf = await tableData('tblRasterFenster'), rt = await tableData('tblRasterTuer');
+      var pN = col(prod, 'Produkt'), pB = col(prod, 'Beschreibung'), pA = prod.headers.indexOf('Aktiv');
+      var produkte = prod.rows.filter(function (r) { return trimmed(r[pN]) && (pA < 0 || String(r[pA] || 'Ja').toLowerCase() !== 'nein'); })
+        .map(function (r) { return { name: trimmed(r[pN]), beschreibung: trimmed(r[pB]) }; });
       var farben = farb.map(function (r) { return trimmed(r[0]); }).filter(Boolean);
       var zimmer = zim.map(function (r) { return trimmed(r[0]); }).filter(Boolean);
       if (!produkte.length || !farben.length || !zimmer.length) throw new Error('Stammdaten in Excel sind leer');
-      master = { produkte: produkte, farben: farben, zimmer: zimmer, source: 'Excel', loadedAt: new Date().toLocaleString('de-CH', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) };
+      var regeln = {};
+      reg.rows.forEach(function (r) {
+        var art = trimmed(r[col(reg, 'Art')]).toLowerCase();
+        var o = { abHoehe: Number(r[col(reg, 'Ab Höhe cm')]) || 0, aufB: Number(r[col(reg, 'Aufpreis pro 10 cm Breite')]) || 0, aufH: Number(r[col(reg, 'Aufpreis pro 10 cm Höhe')]) || 0, rund: Number(r[col(reg, 'Rundung CHF')]) || 5 };
+        if (art.indexOf('fenster') === 0) regeln.fenster = o; else if (art.indexOf('balkon') === 0 || art.indexOf('tür') >= 0) regeln.tuer = o;
+      });
+      if (!regeln.fenster || !regeln.tuer) throw new Error('Preisregeln für Fenster und Balkontür fehlen');
+      var raster = { fenster: readGrid(rf, 'Fenster'), tuer: readGrid(rt, 'Balkontür') };
+      master = { produkte: produkte, farben: farben, zimmer: zimmer, regeln: regeln, raster: raster, source: 'Excel', loadedAt: new Date().toLocaleString('de-CH', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) };
       store(KEY_MASTER, master); fillSelects(); renderAll(true);
-      if (showResult) dialog('<h3>Aktualisiert</h3><p>' + produkte.length + ' Produkte, ' + farben.length + ' Farben und ' + zimmer.length + ' Zimmer aus Excel geladen.</p><div class="acts"><button class="btn primary" data-act="close">OK</button></div>');
+      if (showResult) dialog('<h3>Aktualisiert</h3><p>Preisraster, ' + produkte.length + ' Produkte, ' + farben.length + ' Farben und ' + zimmer.length + ' Zimmer aus Excel geladen.</p><div class="acts"><button class="btn primary" data-act="close">OK</button></div>');
     } catch (e) {
       if (showResult) dialog('<h3>Laden nicht möglich</h3><div class="err-box">' + esc(e.message) + '</div><p>Die App verwendet die zuletzt geladenen Werte.</p><div class="acts"><button class="btn primary" data-act="close">OK</button></div>');
     }
@@ -691,23 +752,24 @@ textarea.in { min-height: 64px; resize: vertical; }
     doc.text(isK ? 'Bestellte Insektenschutz-Elemente gemäss Aufmass vom ' + o.dateText + ':' : 'Insektenschutz-Elemente gemäss Aufmass vom ' + o.dateText + ':', L, y + 7);
     var body = o.positions.map(function (p) {
       var masse = fmt2.format(p.breite).replace(/\.00$/, '') + ' × ' + fmt2.format(p.hoehe).replace(/\.00$/, '') + (p.tiefe != null ? '\nTiefe ' + fmt2.format(p.tiefe).replace(/\.00$/, '') : '');
-      return [String(p.pos), p.bereich + (p.bem ? '\n' + p.bem : ''), p.produkt + '\n' + p.farbe, masse, fmt2.format(p.area), fmt2.format(p.preisM2), fmt2.format(p.price)];
+      var prod = p.produkt + (p.beschreibung ? '\n' + p.beschreibung : '') + '\nFarbe: ' + p.farbe;
+      return [String(p.pos), p.bereich + (p.bem ? '\n' + p.bem : ''), prod, p.art, masse, fmt2.format(p.price)];
     });
     doc.autoTable({
       startY: y + 11, margin: { left: L, right: 210 - R },
-      head: [['Pos', 'Bereich', 'Produkt / Farbe', 'B × H cm', 'm²', 'CHF/m²', 'Betrag CHF']],
+      head: [['Pos', 'Bereich', 'Produkt', 'Art', 'B × H cm', 'Betrag CHF']],
       body: body,
-      foot: [['', 'Total', '', '', fmt2.format(o.totals.area), '', fmt2.format(o.totals.total)]],
+      foot: [['', 'Total', '', '', '', fmt2.format(o.totals.total)]],
       styles: { font: 'helvetica', fontSize: 9, cellPadding: 2.2, valign: 'top', textColor: [22, 32, 27], lineColor: [216, 224, 219], lineWidth: 0.1 },
       headStyles: { fillColor: [29, 122, 82], textColor: 255, fontStyle: 'bold' },
       footStyles: { fillColor: [226, 241, 233], textColor: [22, 32, 27], fontStyle: 'bold' },
-      columnStyles: { 0: { cellWidth: 10 }, 3: { halign: 'right', cellWidth: 22 }, 4: { halign: 'right', cellWidth: 14 }, 5: { halign: 'right', cellWidth: 17 }, 6: { halign: 'right', cellWidth: 22 } }
+      columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 38 }, 3: { cellWidth: 20 }, 4: { halign: 'right', cellWidth: 24 }, 5: { halign: 'right', cellWidth: 24 } }
     });
     y = doc.lastAutoTable.finalY + 10;
     doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
     doc.text('Gesamtbetrag CHF ' + fmt2.format(o.totals.total), R, y, { align: 'right' });
     doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(110, 120, 115);
-    doc.text('Masse in cm, Fläche = Breite × Höhe ÷ 10\'000 ohne Aufrundung.', L, y + 7);
+    doc.text('Masse in cm (Breite × Höhe), gemessen vor Ort.', L, y + 7);
     if (isK) {
       var sy = Math.max(y + 30, 230);
       if (sy > 270) { doc.addPage(); sy = 40; }
@@ -818,7 +880,9 @@ textarea.in { min-height: 64px; resize: vertical; }
         kind === 'direkt' ? 'Keine Offerte – Direktbestellung' : 'Offen', '', 'Noch nicht bestellt', '', '',
         'Ausstehend', '', '', '', '', '', '', '', '', '', '', state.captureId];
       var posRows = pos.map(function (q) {
-        return [p.orderNo, q.pos, q.zimmer, q.zusatz, q.bereich, q.produkt, q.farbe, q.breite, q.hoehe, q.tiefe == null ? '' : q.tiefe, q.area, q.preisM2, q.price, q.bem];
+        // 17 Spalten wie tblPositionen: … Preis pro m² bleibt leer (Preis kommt aus dem Raster), dann Art, Rasterfeld, Preishinweis
+        return [p.orderNo, q.pos, q.zimmer, q.zusatz, q.bereich, q.produkt, q.farbe, q.breite, q.hoehe, q.tiefe == null ? '' : q.tiefe, q.area, '', q.price, q.bem,
+          q.art, q.feld, q.outside ? 'ausserhalb Raster – bitte prüfen' : ''];
       });
       await addRows('tblPositionen', posRows);
       await addRows('tblAuftraege', [orderRow]);
