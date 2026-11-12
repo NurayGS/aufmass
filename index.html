@@ -330,7 +330,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 6';
+  var APP_VERSION = '13.11.2026 · 6b';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'farbeText', 'breite', 'hoehe', 'tiefe', 'bem'];
   var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
@@ -786,24 +786,18 @@ textarea.in { min-height: 64px; resize: vertical; }
     var fi = firma(), L = 20, R = 190, isK = o.kind === 'direkt';
     function txt(color, font, style, size) { doc.setTextColor(color[0], color[1], color[2]); doc.setFont(font, style); doc.setFontSize(size); }
 
-    // Briefkopf: Logo links, Firmenangaben rechts
+    // Briefkopf: nur das Logo. Alle Firmenangaben stehen einmal in der Fusszeile.
     if (assets.logo) doc.addImage(assets.logo, 'PNG', L, 14, 60, 60 * 180 / 856, 'logo', 'FAST');
     else { txt(NAVY, F, 'bold', 18); doc.text(fi.firma, L, 24); }
-    txt(GREY, F, 'normal', 8.5);
-    [fi.firma, fi.strasse, fi.plzOrt, 'Tel. ' + fi.telefon, fi.email, fi.web].filter(function (x) { return trimmed(x) && x !== 'Tel. '; })
-      .forEach(function (line, i) { doc.text(line, R, 16 + i * 4.1, { align: 'right' }); });
 
-    // Absenderzeile und Kundenadresse (passt ins Fenster eines C5-Couverts links)
+    // Kundenadresse links
     var c = o.customer;
-    txt(GREY, F, 'normal', 7);
-    doc.text([fi.firma, fi.strasse, fi.plzOrt].filter(Boolean).join(' · '), L, 47);
-    doc.setDrawColor(LINE[0], LINE[1], LINE[2]); doc.setLineWidth(0.2); doc.line(L, 48.2, L + 80, 48.2);
     txt(INK, F, 'normal', 10.5);
     [[c.vorname, c.nachname].filter(Boolean).join(' '), c.strasse, [c.plz, c.ort].filter(Boolean).join(' ')].filter(function (x) { return trimmed(x); })
       .forEach(function (line, i) { doc.text(line, L, 54 + i * 5.2); });
 
-    // Rechts: Nummer, Datum, Gültigkeit
-    var info = [['Auftragsnr.', o.orderNo], ['Datum', o.dateText]];
+    // Rechts: Nummer (je nach Dokument beschriftet), Datum, Gültigkeit
+    var info = [[isK ? 'Auftrags-Nr.' : 'Offerten-Nr.', o.orderNo], ['Datum', o.dateText]];
     if (!isK) info.push(['Gültig bis', o.validUntil]);
     if (trimmed(c.telefon)) info.push(['Ihre Telefonnr.', trimmed(c.telefon)]);
     info.forEach(function (row, i) {
@@ -832,12 +826,14 @@ textarea.in { min-height: 64px; resize: vertical; }
       footStyles: { fillColor: [232, 235, 243], textColor: NAVY, font: F, fontStyle: 'bold' },
       columnStyles: { 0: { cellWidth: 12 }, 1: { cellWidth: 36 }, 3: { cellWidth: 20 }, 4: { halign: 'right', cellWidth: 24 }, 5: { halign: 'right', cellWidth: 24 } }
     });
-    y = doc.lastAutoTable.finalY + 10;
+    // Direkt unter der Tabelle: links der Masse-Hinweis, rechts der Gesamtbetrag (gleiche Zeile)
+    y = doc.lastAutoTable.finalY + 8;
     if (y > 250) { doc.addPage(); y = 30; }
+    txt(GREY, F, 'normal', 8.5);
+    doc.text('Masse vor Ort gemessen, Breite × Höhe in cm.', L, y);
     txt(NAVY, F, 'bold', 12.5);
     doc.text('Gesamtbetrag CHF ' + fmt2.format(o.totals.total), R, y, { align: 'right' });
-    txt(GREY, F, 'normal', 8.5);
-    doc.text('Masse in cm (Breite × Höhe), gemessen vor Ort. Preise in CHF.', L, y + 7);
+    y -= 4;   // Folgetext rückt etwas näher
     if (!isK) {
       txt(INK, F, 'normal', 10);
       doc.text('Diese Offerte ist gültig bis ' + o.validUntil + '. Gerne beraten wir Sie bei Fragen und freuen uns auf Ihren Auftrag.', L, y + 17, { maxWidth: R - L });
