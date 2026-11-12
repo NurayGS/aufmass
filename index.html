@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="de-CH">
 <head>
 <meta charset="utf-8">
@@ -19,7 +19,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
-/* Layout: eine schmale Spalte fÃ¼r das iPhone im Hochformat; Abschnitte als Karten; Produkt-Formular direkt im Abschnitt, erfasste Produkte als Liste darunter */
+/* Layout: eine schmale Spalte für das iPhone im Hochformat; Abschnitte als Karten; Produkt-Formular direkt im Abschnitt, erfasste Produkte als Liste darunter */
 :root {
   --bg: #eef2ef; --surface: #ffffff; --surface-2: #f5f8f6; --fg: #16201b; --muted: #5d6b63; --line: #d8e0db;
   --accent: #1d7a52; --accent-fg: #ffffff; --accent-soft: #e2f1e9;
@@ -191,7 +191,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       <div class="brand-t"><b>FlyGuard Aufmass</b><span id="dateLine">Insektenschutz</span></div>
     </div>
     <button class="acct" id="acctBtn">Anmelden</button>
-    <button class="icon-btn" id="menuBtn" aria-label="MenÃ¼" aria-expanded="false">
+    <button class="icon-btn" id="menuBtn" aria-label="Menü" aria-expanded="false">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
     </button>
     <div class="menu" id="menu" hidden>
@@ -242,7 +242,7 @@ textarea.in { min-height: 64px; resize: vertical; }
         <div class="pform-h"><b id="formTitle">Neues Produkt</b></div>
         <div class="grid2">
           <div class="field"><label for="fZimmer">Zimmer / Bereich</label><select class="in" id="fZimmer"></select></div>
-          <div class="field"><label for="fZusatz" id="fZusatzLbl">Zusatzbezeichnung</label><input class="in" id="fZusatz" placeholder="z. B. BÃ¼ro 2" autocomplete="off" enterkeyhint="next"></div>
+          <div class="field"><label for="fZusatz" id="fZusatzLbl">Zusatzbezeichnung</label><input class="in" id="fZusatz" placeholder="z. B. Büro 2" autocomplete="off" enterkeyhint="next"></div>
         </div>
         <div class="hint" id="hZusatz"></div>
         <div class="grid2">
@@ -252,21 +252,21 @@ textarea.in { min-height: 64px; resize: vertical; }
         <div class="field" id="farbeTextWrap" hidden><label for="fFarbeText">Farbwunsch des Kunden</label><input class="in" id="fFarbeText" placeholder="z. B. RAL 7016, Braun, Bronze" autocomplete="off" enterkeyhint="next"></div>
         <div class="grid3">
           <div class="field"><label for="fBreite">Breite</label><div class="unit"><input class="in" id="fBreite" inputmode="decimal" autocomplete="off" placeholder="0"><span>cm</span></div></div>
-          <div class="field"><label for="fHoehe">HÃ¶he</label><div class="unit"><input class="in" id="fHoehe" inputmode="decimal" autocomplete="off" placeholder="0"><span>cm</span></div></div>
+          <div class="field"><label for="fHoehe">Höhe</label><div class="unit"><input class="in" id="fHoehe" inputmode="decimal" autocomplete="off" placeholder="0"><span>cm</span></div></div>
           <div class="field"><label for="fTiefe">Tiefe <i>(opt.)</i></label><div class="unit"><input class="in" id="fTiefe" inputmode="decimal" autocomplete="off" placeholder="0"><span>cm</span></div></div>
         </div>
         <div class="hint" id="hMasse"></div>
         <div class="field"><label for="fBem">Bemerkungen <i>(optional)</i></label><textarea class="in" id="fBem" placeholder="z. B. Fenstergriff beachten"></textarea></div>
         <div class="area" aria-live="polite">
-          <div class="area-top"><span>Berechnete FlÃ¤che</span><b id="fArea">â€“</b></div>
+          <div class="area-top"><span>Berechnete Fläche</span><b id="fArea">–</b></div>
           <div class="tape" aria-hidden="true"></div>
-          <div class="f" id="fFormula">Breite Ã— HÃ¶he Ã· 10'000, ohne Aufrundung</div>
-          <div class="p"><span id="fPriceLbl">Preis</span><b id="fPrice">â€“</b></div>
+          <div class="f" id="fFormula">Breite × Höhe ÷ 10'000, ohne Aufrundung</div>
+          <div class="p"><span id="fPriceLbl">Preis</span><b id="fPrice">–</b></div>
         </div>
         <div class="acts-row">
-          <button class="btn danger" id="fDelete" hidden>LÃ¶schen</button>
+          <button class="btn danger" id="fDelete" hidden>Löschen</button>
           <button class="btn ghost" id="fCancel" hidden>Abbrechen</button>
-          <button class="btn primary" id="fAdd" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span id="fAddLbl">HinzufÃ¼gen</span></button>
+          <button class="btn primary" id="fAdd" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span id="fAddLbl">Hinzufügen</span></button>
         </div>
         <div class="need" id="fNeed"></div>
       </div>
@@ -279,9 +279,9 @@ textarea.in { min-height: 64px; resize: vertical; }
     <div class="card-h"><h2><span class="step">3.</span> Zusammenfassung</h2></div>
     <div class="card-b">
       <div class="kv"><span>Produkte</span><span class="v" id="sCount">0</span></div>
-      <div class="kv"><span>GesamtflÃ¤che</span><span class="v" id="sArea">0.00 mÂ²</span></div>
+      <div class="kv"><span>Gesamtfläche</span><span class="v" id="sArea">0.00 m²</span></div>
       <div class="kv total"><span>Gesamtpreis</span><span class="v" id="sTotal">CHF 0.00</span></div>
-      <div class="fine">Preise nach Preisraster (Fenster / BalkontÃ¼r), Masse fÃ¼r den Preis auf 10 cm aufgerundet.</div>
+      <div class="fine">Preise nach Preisraster (Fenster / Balkontür), Masse für den Preis auf 10 cm aufgerundet.</div>
     </div>
   </section>
 
@@ -290,7 +290,7 @@ textarea.in { min-height: 64px; resize: vertical; }
     <div class="card-h"><h2><span class="step">4.</span> Kundenentscheidung</h2></div>
     <div class="card-b">
       <div class="decide">
-        <button class="big" id="btnOfferte"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg>Offerte erstellen<small>Kunde entscheidet spÃ¤ter</small></button>
+        <button class="big" id="btnOfferte"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg>Offerte erstellen<small>Kunde entscheidet später</small></button>
         <button class="big primary" id="btnDirekt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9.5"/></svg>Direkt bestellt<small>Kaufvertrag erstellen</small></button>
       </div>
     </div>
@@ -306,19 +306,19 @@ textarea.in { min-height: 64px; resize: vertical; }
 
   // ================= Einstellungen =================
   var CONFIG = {
-    clientId: '43341944-1ef8-4f08-ab81-8e0beb387996',   // App-Registrierung Â«FlyGuard AufmassÂ» (kein Geheimnis)
+    clientId: '43341944-1ef8-4f08-ab81-8e0beb387996',   // App-Registrierung «FlyGuard Aufmass» (kein Geheimnis)
     tenantId: '6488a3dd-88da-4b04-9a09-d7386ae6d49d',   // FlyGuard-Verzeichnis (kein Geheimnis)
     basePath: 'Fylguard Excel Datei',   // Ordner in OneDrive
     workbook: 'FlyGuard_Buero.xlsx',
-    ordersFolder: 'AuftrÃ¤ge',
+    ordersFolder: 'Aufträge',
     company: 'FlyGuard',
     scopes: ['User.Read', 'Files.ReadWrite']
   };
-  // Ersatzwerte, falls Excel noch nicht geladen ist (gleiche Regeln wie im Blatt Â«PreisrasterÂ»)
+  // Ersatzwerte, falls Excel noch nicht geladen ist (gleiche Regeln wie im Blatt «Preisraster»)
   function makeGrid(widths, heights, fn) { return { widths: widths, heights: heights, cells: heights.map(function (h) { return widths.map(function (w) { return Math.round(fn(w, h) / 5) * 5; }); }) }; }
   function range(a, b) { var r = []; for (var x = a; x <= b; x += 10) r.push(x); return r; }
   var DEFAULTS = {
-    zimmer: ['Schlafzimmer', 'Wohnzimmer', 'Esszimmer', 'KÃ¼che', 'WC', 'Badezimmer', 'BÃ¼ro', 'Gamingzimmer', 'Sonstiges'],
+    zimmer: ['Schlafzimmer', 'Wohnzimmer', 'Esszimmer', 'Küche', 'WC', 'Badezimmer', 'Büro', 'Gamingzimmer', 'Sonstiges'],
     produkte: [{ name: 'Produkt 1', beschreibung: '' }, { name: 'Produkt 2', beschreibung: '' }, { name: 'Produkt 3', beschreibung: '' }, { name: 'Produkt 4', beschreibung: '' }],
     farben: ['Weiss', 'Anthrazit', 'Sonstige'],
     firma: { firma: 'FlyGuard Arifi', strasse: 'Rebrainstrasse 17', plzOrt: '8106 Adlikon b. Regensdorf', telefon: '076 419 40 47', email: 'info@flyguard.ch', web: '', uid: 'CHE-225.710.567', gueltigTage: 30 },
@@ -328,7 +328,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '12.11.2026 Â· 5';
+  var APP_VERSION = '12.11.2026 · 5b';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'farbeText', 'breite', 'hoehe', 'tiefe', 'bem'];
   var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
@@ -350,7 +350,7 @@ textarea.in { min-height: 64px; resize: vertical; }
   function parseCm(raw) {
     var s = trimmed(raw).replace(/\s/g, '').replace(',', '.');
     if (s === '') return { empty: true, ok: false };
-    if (!/^\d+(\.\d+)?$/.test(s)) return { ok: false, msg: 'keine gÃ¼ltige Zahl' };
+    if (!/^\d+(\.\d+)?$/.test(s)) return { ok: false, msg: 'keine gültige Zahl' };
     var v = parseFloat(s);
     if (v < 0.1 || v > 999) return { ok: false, msg: 'bitte 0.1 bis 999 cm' };
     return { ok: true, val: v };
@@ -363,8 +363,8 @@ textarea.in { min-height: 64px; resize: vertical; }
   function farbeLabel(e) { return e.farbe === 'Sonstige' ? (trimmed(e.farbeText) || 'Sonstige') : (e.farbe || ''); }
   function bereich(e) { var z = e.zimmer || '', zu = trimmed(e.zusatz); if (!z || z === 'Sonstiges') return zu; return zu ? z + ', ' + zu : z; }
 
-  // Preis aus dem Raster: Masse auf 10 cm aufrunden, ab Â«Ab HÃ¶heÂ» der BalkontÃ¼r gilt das TÃ¼r-Raster.
-  // Kleiner als das erste Feld = Startpreis. GrÃ¶sser als das Raster = mit den Aufpreisen weiterrechnen (Hinweis).
+  // Preis aus dem Raster: Masse auf 10 cm aufrunden, ab «Ab Höhe» der Balkontür gilt das Tür-Raster.
+  // Kleiner als das erste Feld = Startpreis. Grösser als das Raster = mit den Aufpreisen weiterrechnen (Hinweis).
   function rasterPrice(bVal, hVal) {
     var bR = Math.ceil(bVal / 10 - 1e-9) * 10, hR = Math.ceil(hVal / 10 - 1e-9) * 10;
     var isTuer = hR >= (master.regeln.tuer.abHoehe || 200);
@@ -374,14 +374,14 @@ textarea.in { min-height: 64px; resize: vertical; }
     var ci = W.findIndex(function (w) { return w >= Math.min(bE, W[W.length - 1]); });
     var ri = H.findIndex(function (x) { return x >= Math.min(hE, H[H.length - 1]); });
     var base = (ri >= 0 && ci >= 0) ? Number(g.cells[ri][ci]) : NaN;
-    if (!isFinite(base)) return { art: isTuer ? 'BalkontÃ¼r' : 'Fenster', feld: '', price: null, outside: false, error: 'Preis fehlt im Raster' };
+    if (!isFinite(base)) return { art: isTuer ? 'Balkontür' : 'Fenster', feld: '', price: null, outside: false, error: 'Preis fehlt im Raster' };
     var outW = bE > W[W.length - 1], outH = hE > H[H.length - 1];
     var price = base;
     if (outW || outH) {
       price += (outW ? (bE - W[W.length - 1]) / 10 * rg.aufB : 0) + (outH ? (hE - H[H.length - 1]) / 10 * rg.aufH : 0);
       price = Math.round(price / (rg.rund || 5)) * (rg.rund || 5);
     }
-    return { art: isTuer ? 'BalkontÃ¼r' : 'Fenster', feld: (outW ? bE : W[ci]) + ' Ã— ' + (outH ? hE : H[ri]), price: price, outside: outW || outH };
+    return { art: isTuer ? 'Balkontür' : 'Fenster', feld: (outW ? bE : W[ci]) + ' × ' + (outH ? hE : H[ri]), price: price, outside: outW || outH };
   }
   function calc(e) {
     var b = parseCm(e.breite), h = parseCm(e.hoehe);
@@ -396,16 +396,16 @@ textarea.in { min-height: 64px; resize: vertical; }
     if (!e.produkt) out.push('Produkt');
     if (!e.farbe) out.push('Farbe');
     else if (e.farbe === 'Sonstige' && !trimmed(e.farbeText)) out.push('Farbwunsch');
-    if (c.r && c.price == null) out.push('Preis (Raster prÃ¼fen)');
-    if (!c.b.ok) out.push(c.b.empty ? 'Breite' : 'gÃ¼ltige Breite');
-    if (!c.h.ok) out.push(c.h.empty ? 'HÃ¶he' : 'gÃ¼ltige HÃ¶he');
-    if (!t.empty && !t.ok) out.push('gÃ¼ltige Tiefe');
+    if (c.r && c.price == null) out.push('Preis (Raster prüfen)');
+    if (!c.b.ok) out.push(c.b.empty ? 'Breite' : 'gültige Breite');
+    if (!c.h.ok) out.push(c.h.empty ? 'Höhe' : 'gültige Höhe');
+    if (!t.empty && !t.ok) out.push('gültige Tiefe');
     return out;
   }
   function fillSelects() {
     function fill(sel, items) {
       var cur = sel.value;
-      sel.innerHTML = '<option value="">WÃ¤hlen</option>' + items.map(function (x) { return '<option>' + esc(x) + '</option>'; }).join('');
+      sel.innerHTML = '<option value="">Wählen</option>' + items.map(function (x) { return '<option>' + esc(x) + '</option>'; }).join('');
       sel.value = cur;
     }
     fill($('fZimmer'), master.zimmer);
@@ -434,7 +434,7 @@ textarea.in { min-height: 64px; resize: vertical; }
     CUST_FIELDS.forEach(function (f) { var el = $(f); if (document.activeElement !== el) el.value = c[f] || ''; });
     var name = [c.vorname, c.nachname].filter(Boolean).join(' ');
     var parts = [name, c.ort].filter(function (x) { return trimmed(x); });
-    $('custSum').textContent = parts.length ? parts.join(' Â· ') : 'Name, Adresse, Telefon, E-Mail und Datum';
+    $('custSum').textContent = parts.length ? parts.join(' · ') : 'Name, Adresse, Telefon, E-Mail und Datum';
     var miss = custMissing(), warn = $('custWarn');
     if (miss.length && parts.length) { warn.hidden = false; warn.textContent = 'Fehlt noch: ' + miss.join(', '); } else { warn.hidden = true; }
     $('custCard').classList.toggle('open', state.custOpen);
@@ -443,7 +443,7 @@ textarea.in { min-height: 64px; resize: vertical; }
   }
   CUST_FIELDS.forEach(function (f) { $(f).addEventListener('input', function () { state.customer[f] = this.value; renderCustomer(); save(); }); });
 
-  // Eingabetaste (â†µ) springt ins nÃ¤chste Feld. Bereits ausgefÃ¼llte Auswahllisten werden Ã¼bersprungen.
+  // Eingabetaste (↵) springt ins nächste Feld. Bereits ausgefüllte Auswahllisten werden übersprungen.
   var NEXT_ORDER = ['vorname', 'nachname', 'strasse', 'plz', 'ort', 'telefon', 'email', null,
     'fZimmer', 'fZusatz', 'fProdukt', 'fFarbe', 'fFarbeText', 'fBreite', 'fHoehe', 'fTiefe', null];
   document.addEventListener('keydown', function (ev) {
@@ -472,34 +472,34 @@ textarea.in { min-height: 64px; resize: vertical; }
     var f = state.form, c = calc(f), editing = !!state.editId;
     if (syncInputs) FIELDS.forEach(function (k) { $(INPUT_ID[k]).value = f[k] || ''; });
     $('pform').classList.toggle('editing', editing);
-    $('formTitle').textContent = editing ? 'Bearbeiten: ' + (bereich(f) || 'Produkt') : (state.elements.length ? 'NÃ¤chstes Produkt' : 'Neues Produkt');
-    $('fZusatzLbl').innerHTML = f.zimmer === 'Sonstiges' ? 'Bezeichnung <i>(nÃ¶tig)</i>' : 'Zusatzbezeichnung';
-    $('fArea').innerHTML = c.area != null ? fmt2.format(c.area) + ' <small>mÂ²</small>' : 'â€“';
+    $('formTitle').textContent = editing ? 'Bearbeiten: ' + (bereich(f) || 'Produkt') : (state.elements.length ? 'Nächstes Produkt' : 'Neues Produkt');
+    $('fZusatzLbl').innerHTML = f.zimmer === 'Sonstiges' ? 'Bezeichnung <i>(nötig)</i>' : 'Zusatzbezeichnung';
+    $('fArea').innerHTML = c.area != null ? fmt2.format(c.area) + ' <small>m²</small>' : '–';
     $('fFormula').textContent = c.area != null
-      ? fmt2.format(c.b.val).replace(/\.00$/, '') + ' Ã— ' + fmt2.format(c.h.val).replace(/\.00$/, '') + ' cm Ã· 10\'000, ohne Aufrundung'
-      : 'Breite Ã— HÃ¶he Ã· 10\'000, ohne Aufrundung';
+      ? fmt2.format(c.b.val).replace(/\.00$/, '') + ' × ' + fmt2.format(c.h.val).replace(/\.00$/, '') + ' cm ÷ 10\'000, ohne Aufrundung'
+      : 'Breite × Höhe ÷ 10\'000, ohne Aufrundung';
     $('farbeTextWrap').hidden = f.farbe !== 'Sonstige';
-    $('fPriceLbl').textContent = c.r ? (c.r.art + ', Rasterfeld ' + c.r.feld + (c.r.outside ? ' Â· ausserhalb Raster, bitte prÃ¼fen' : '')) : 'Preis';
+    $('fPriceLbl').textContent = c.r ? (c.r.art + ', Rasterfeld ' + c.r.feld + (c.r.outside ? ' · ausserhalb Raster, bitte prüfen' : '')) : 'Preis';
     $('fPriceLbl').style.color = c.r && c.r.outside ? 'var(--warn)' : '';
-    $('fPrice').textContent = c.price != null ? 'CHF ' + fmt2.format(c.price) : (c.r && c.r.error ? c.r.error : 'â€“');
+    $('fPrice').textContent = c.price != null ? 'CHF ' + fmt2.format(c.price) : (c.r && c.r.error ? c.r.error : '–');
     var t = parseCm(f.tiefe), msgs = [];
     function mark(id, bad) { $(id).classList.toggle('err', !!bad); }
     var bBad = touched.breite && !c.b.empty && !c.b.ok, hBad = touched.hoehe && !c.h.empty && !c.h.ok, tBad = touched.tiefe && !t.empty && !t.ok;
     mark('fBreite', bBad); mark('fHoehe', hBad); mark('fTiefe', tBad);
     if (bBad) msgs.push('Breite: ' + c.b.msg);
-    if (hBad) msgs.push('HÃ¶he: ' + c.h.msg);
+    if (hBad) msgs.push('Höhe: ' + c.h.msg);
     if (tBad) msgs.push('Tiefe: ' + t.msg);
-    $('hMasse').textContent = msgs.join(' Â· ');
+    $('hMasse').textContent = msgs.join(' · ');
     var zBad = touched.zusatz && f.zimmer === 'Sonstiges' && !trimmed(f.zusatz);
     mark('fZusatz', zBad);
-    $('hZusatz').textContent = zBad ? 'Bei Â«SonstigesÂ» bitte eintragen, was es ist.' : '';
+    $('hZusatz').textContent = zBad ? 'Bei «Sonstiges» bitte eintragen, was es ist.' : '';
     var miss = missing(f);
     $('fAdd').disabled = miss.length > 0;
-    $('fAddLbl').textContent = editing ? 'Speichern' : 'HinzufÃ¼gen';
+    $('fAddLbl').textContent = editing ? 'Speichern' : 'Hinzufügen';
     $('fAdd').querySelector('svg').style.display = editing ? 'none' : '';
-    $('fNeed').textContent = miss.length && (editing || formHasInput(f)) ? 'Noch nÃ¶tig: ' + miss.join(', ') : (miss.length ? 'FÃ¼lle Zimmer, Produkt, Farbe, Breite und HÃ¶he aus.' : '');
+    $('fNeed').textContent = miss.length && (editing || formHasInput(f)) ? 'Noch nötig: ' + miss.join(', ') : (miss.length ? 'Fülle Zimmer, Produkt, Farbe, Breite und Höhe aus.' : '');
     $('fDelete').hidden = !editing; $('fCancel').hidden = !editing;
-    if (!editing) { $('fDelete').textContent = 'LÃ¶schen'; $('fDelete').dataset.armed = ''; }
+    if (!editing) { $('fDelete').textContent = 'Löschen'; $('fDelete').dataset.armed = ''; }
   }
   FIELDS.forEach(function (k) {
     var el = $(INPUT_ID[k]);
@@ -526,10 +526,10 @@ textarea.in { min-height: 64px; resize: vertical; }
   function renderList() {
     $('list').innerHTML = state.elements.map(function (e, i) {
       var c = calc(e), miss = missing(e), name = bereich(e) || 'Ohne Bezeichnung';
-      var sub = miss.length ? '<span class="sub w">âš  UnvollstÃ¤ndig: ' + esc(miss.join(', ')) + '</span>'
-        : (c.r && c.r.outside ? '<span class="sub w">âš  ausserhalb Raster Â· CHF ' + fmt2.format(c.price) + ' bitte prÃ¼fen</span>'
-        : '<span class="sub">' + esc([e.produkt, farbeLabel(e)].filter(Boolean).join(' Â· ')) + ' Â· ' + esc(e.breite) + ' Ã— ' + esc(e.hoehe) + ' cm Â· CHF ' + fmt2.format(c.price) + '</span>');
-      var m2 = c.area != null ? fmt2.format(c.area) + ' <small>mÂ²</small>' : '<small>â€“</small>';
+      var sub = miss.length ? '<span class="sub w">⚠ Unvollständig: ' + esc(miss.join(', ')) + '</span>'
+        : (c.r && c.r.outside ? '<span class="sub w">⚠ ausserhalb Raster · CHF ' + fmt2.format(c.price) + ' bitte prüfen</span>'
+        : '<span class="sub">' + esc([e.produkt, farbeLabel(e)].filter(Boolean).join(' · ')) + ' · ' + esc(e.breite) + ' × ' + esc(e.hoehe) + ' cm · CHF ' + fmt2.format(c.price) + '</span>');
+      var m2 = c.area != null ? fmt2.format(c.area) + ' <small>m²</small>' : '<small>–</small>';
       return '<button class="row' + (e.id === state.editId ? ' active' : '') + '" data-id="' + e.id + '"><span class="num">' + (i + 1) + '</span>' +
         '<span class="txt"><span class="ttl">' + esc(name) + '</span>' + sub + '</span><span class="m2">' + m2 + '</span>' + ICON_CHEV + '</button>';
     }).join('');
@@ -561,12 +561,12 @@ textarea.in { min-height: 64px; resize: vertical; }
   }
   function renderSummary() {
     var t = totals();
-    $('sCount').textContent = t.count; $('sArea').textContent = fmt2.format(t.area) + ' mÂ²'; $('sTotal').textContent = 'CHF ' + fmt2.format(t.total);
-    $('srcInfo').textContent = 'Preisraster und Listen: ' + (master.source === 'Excel' ? 'aus Excel, geladen ' + master.loadedAt : 'Standardwerte (noch nicht aus Excel geladen)') + ' Â· App-Version ' + APP_VERSION;
+    $('sCount').textContent = t.count; $('sArea').textContent = fmt2.format(t.area) + ' m²'; $('sTotal').textContent = 'CHF ' + fmt2.format(t.total);
+    $('srcInfo').textContent = 'Preisraster und Listen: ' + (master.source === 'Excel' ? 'aus Excel, geladen ' + master.loadedAt : 'Standardwerte (noch nicht aus Excel geladen)') + ' · App-Version ' + APP_VERSION;
   }
   function renderAll(syncForm) { renderCustomer(); renderForm(syncForm); renderList(); renderSummary(); renderAuth(); save(); }
 
-  // ================= Dialog & MenÃ¼ =================
+  // ================= Dialog & Menü =================
   function dialog(html) { $('dlg').innerHTML = html; $('dlgBg').hidden = false; document.body.classList.add('locked'); var f = $('dlg').querySelector('button, a'); if (f) f.focus(); }
   function closeDialog() { $('dlgBg').hidden = true; document.body.classList.remove('locked'); }
   var dialogActions = {};
@@ -582,7 +582,7 @@ textarea.in { min-height: 64px; resize: vertical; }
   document.addEventListener('click', function (ev) { if (!$('menu').hidden && !ev.target.closest('#menu') && !ev.target.closest('#menuBtn')) toggleMenu(false); });
   $('mClear').addEventListener('click', function () {
     toggleMenu(false);
-    dialog('<h3>Neue Erfassung?</h3><p>Alle Kundendaten und Produkte dieser Erfassung werden gelÃ¶scht. Bereits gespeicherte AuftrÃ¤ge bleiben in Excel.</p><div class="acts"><button class="btn primary" data-act="new">Alles leeren</button><button class="btn" data-act="close">Abbrechen</button></div>');
+    dialog('<h3>Neue Erfassung?</h3><p>Alle Kundendaten und Produkte dieser Erfassung werden gelöscht. Bereits gespeicherte Aufträge bleiben in Excel.</p><div class="acts"><button class="btn primary" data-act="new">Alles leeren</button><button class="btn" data-act="close">Abbrechen</button></div>');
   });
   $('mReload').addEventListener('click', function () { toggleMenu(false); loadMaster(true); });
   // Neueste Version holen: andere Adresse umgeht den Zwischenspeicher, die Erfassung bleibt erhalten
@@ -591,15 +591,15 @@ textarea.in { min-height: 64px; resize: vertical; }
   $('mPreview').addEventListener('click', async function () {
     toggleMenu(false);
     var saved = state.elements, cust = state.customer;
-    dialog('<h3>Muster-PDF</h3><p>Wird erstellt â€¦</p>');
+    dialog('<h3>Muster-PDF</h3><p>Wird erstellt …</p>');
     try {
       if (!state.elements.length) {
         state.elements = [
           { id: 'm1', zimmer: 'Schlafzimmer', zusatz: 'links', produkt: master.produkte[0].name, farbe: master.farben[0], breite: '120', hoehe: '140', tiefe: '5', bem: '' },
-          { id: 'm2', zimmer: 'KÃ¼che', zusatz: '', produkt: master.produkte[0].name, farbe: master.farben[0], breite: '80', hoehe: '120', tiefe: '', bem: 'Fenstergriff beachten' },
-          { id: 'm3', zimmer: 'BÃ¼ro', zusatz: 'BÃ¼ro 2', produkt: master.produkte[0].name, farbe: master.farben[0], breite: '73', hoehe: '118', tiefe: '', bem: '' }
+          { id: 'm2', zimmer: 'Küche', zusatz: '', produkt: master.produkte[0].name, farbe: master.farben[0], breite: '80', hoehe: '120', tiefe: '', bem: 'Fenstergriff beachten' },
+          { id: 'm3', zimmer: 'Büro', zusatz: 'Büro 2', produkt: master.produkte[0].name, farbe: master.farben[0], breite: '73', hoehe: '118', tiefe: '', bem: '' }
         ];
-        if (!trimmed(cust.nachname)) cust = { vorname: 'Anna', nachname: 'Muster', strasse: 'Musterweg 12', plz: '8000', ort: 'ZÃ¼rich', telefon: '079 123 45 67' };
+        if (!trimmed(cust.nachname)) cust = { vorname: 'Anna', nachname: 'Muster', strasse: 'Musterweg 12', plz: '8000', ort: 'Zürich', telefon: '079 123 45 67' };
       }
       var pos = positions(), tot = totals(), now = new Date();
       state.elements = saved;
@@ -608,8 +608,8 @@ textarea.in { min-height: 64px; resize: vertical; }
       var blob2 = await makePdf(Object.assign({ kind: 'direkt' }, base));
       lastPreview = [URL.createObjectURL(blob), URL.createObjectURL(blob2)];
       dialog('<h3>Muster-PDF</h3><p>So sehen die Dokumente aus (mit deinen Eingaben oder Beispieldaten).</p><div class="acts">' +
-        '<a class="btn primary" href="' + lastPreview[0] + '" target="_blank" rel="noopener">Muster-Offerte Ã¶ffnen</a>' +
-        '<a class="btn" href="' + lastPreview[1] + '" target="_blank" rel="noopener">Muster-Kaufvertrag Ã¶ffnen</a>' +
+        '<a class="btn primary" href="' + lastPreview[0] + '" target="_blank" rel="noopener">Muster-Offerte öffnen</a>' +
+        '<a class="btn" href="' + lastPreview[1] + '" target="_blank" rel="noopener">Muster-Kaufvertrag öffnen</a>' +
         '<button class="btn" data-act="close">Schliessen</button></div>');
     } catch (e) {
       state.elements = saved;
@@ -630,7 +630,7 @@ textarea.in { min-height: 64px; resize: vertical; }
     $('setupNotice').hidden = configured();
     $('loginNotice').hidden = !configured() || !!account;
     $('mLogout').hidden = !account;
-    $('mInfo').textContent = (account ? 'Angemeldet als ' + (account.username || '') : (authError ? 'Anmeldefehler: ' + authError : 'Nicht angemeldet')) + ' Â· Version ' + APP_VERSION;
+    $('mInfo').textContent = (account ? 'Angemeldet als ' + (account.username || '') : (authError ? 'Anmeldefehler: ' + authError : 'Nicht angemeldet')) + ' · Version ' + APP_VERSION;
   }
   async function initAuth() {
     if (!configured() || !window.msal) { renderAuth(); return; }
@@ -701,10 +701,10 @@ textarea.in { min-height: 64px; resize: vertical; }
     var head = await graph('GET', '/me/drive/items/' + id + '/workbook/tables/' + name + '/headerRowRange');
     return { headers: head.values[0].map(function (h) { return trimmed(h); }), rows: await tableRows(name) };
   }
-  function col(t, name) { var i = t.headers.indexOf(name); if (i < 0) throw new Error('Spalte Â«' + name + 'Â» fehlt'); return i; }
+  function col(t, name) { var i = t.headers.indexOf(name); if (i < 0) throw new Error('Spalte «' + name + '» fehlt'); return i; }
   function readGrid(t, label) {
     var widths = t.headers.slice(1).map(Number), heights = [], cells = [];
-    if (!widths.length || widths.some(function (w) { return !isFinite(w) || w <= 0; })) throw new Error('Kopfzeile im Raster ' + label + ' ungÃ¼ltig');
+    if (!widths.length || widths.some(function (w) { return !isFinite(w) || w <= 0; })) throw new Error('Kopfzeile im Raster ' + label + ' ungültig');
     t.rows.forEach(function (r) { var h = Number(r[0]); if (isFinite(h) && h > 0) { heights.push(h); cells.push(r.slice(1).map(Number)); } });
     if (!heights.length) throw new Error('Raster ' + label + ' ist leer');
     return { widths: widths, heights: heights, cells: cells };
@@ -722,25 +722,25 @@ textarea.in { min-height: 64px; resize: vertical; }
       var regeln = {};
       reg.rows.forEach(function (r) {
         var art = trimmed(r[col(reg, 'Art')]).toLowerCase();
-        var o = { abHoehe: Number(r[col(reg, 'Ab HÃ¶he cm')]) || 0, aufB: Number(r[col(reg, 'Aufpreis pro 10 cm Breite')]) || 0, aufH: Number(r[col(reg, 'Aufpreis pro 10 cm HÃ¶he')]) || 0, rund: Number(r[col(reg, 'Rundung CHF')]) || 5 };
-        if (art.indexOf('fenster') === 0) regeln.fenster = o; else if (art.indexOf('balkon') === 0 || art.indexOf('tÃ¼r') >= 0) regeln.tuer = o;
+        var o = { abHoehe: Number(r[col(reg, 'Ab Höhe cm')]) || 0, aufB: Number(r[col(reg, 'Aufpreis pro 10 cm Breite')]) || 0, aufH: Number(r[col(reg, 'Aufpreis pro 10 cm Höhe')]) || 0, rund: Number(r[col(reg, 'Rundung CHF')]) || 5 };
+        if (art.indexOf('fenster') === 0) regeln.fenster = o; else if (art.indexOf('balkon') === 0 || art.indexOf('tür') >= 0) regeln.tuer = o;
       });
-      if (!regeln.fenster || !regeln.tuer) throw new Error('Preisregeln fÃ¼r Fenster und BalkontÃ¼r fehlen');
-      var raster = { fenster: readGrid(rf, 'Fenster'), tuer: readGrid(rt, 'BalkontÃ¼r') };
-      // Firmenangaben (Blatt Â«EinstellungenÂ»); fehlt die Tabelle, gelten die eingebauten Werte
+      if (!regeln.fenster || !regeln.tuer) throw new Error('Preisregeln für Fenster und Balkontür fehlen');
+      var raster = { fenster: readGrid(rf, 'Fenster'), tuer: readGrid(rt, 'Balkontür') };
+      // Firmenangaben (Blatt «Einstellungen»); fehlt die Tabelle, gelten die eingebauten Werte
       var fa = Object.assign({}, DEFAULTS.firma);
       try {
         var es = await tableRows('tblEinstellungen'), map = {};
         es.forEach(function (r) { map[trimmed(r[0]).toLowerCase()] = trimmed(r[1]); });
         var KEYS = { firma: 'firma', strasse: 'strasse', plzOrt: 'plz ort', telefon: 'telefon', email: 'e-mail', web: 'webseite', uid: 'uid' };
         Object.keys(KEYS).forEach(function (k) { if (KEYS[k] in map) fa[k] = map[KEYS[k]]; });
-        if (Number(map['offerte gÃ¼ltig tage']) > 0) fa.gueltigTage = Number(map['offerte gÃ¼ltig tage']);
+        if (Number(map['offerte gültig tage']) > 0) fa.gueltigTage = Number(map['offerte gültig tage']);
       } catch (e) { /* Einstellungen fehlen: Standardwerte */ }
       master = { produkte: produkte, farben: farben, zimmer: zimmer, regeln: regeln, raster: raster, firma: fa, source: 'Excel', loadedAt: new Date().toLocaleString('de-CH', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) };
       store(KEY_MASTER, master); fillSelects(); renderAll(true);
       if (showResult) dialog('<h3>Aktualisiert</h3><p>Preisraster, ' + produkte.length + ' Produkte, ' + farben.length + ' Farben und ' + zimmer.length + ' Zimmer aus Excel geladen.</p><div class="acts"><button class="btn primary" data-act="close">OK</button></div>');
     } catch (e) {
-      if (showResult) dialog('<h3>Laden nicht mÃ¶glich</h3><div class="err-box">' + esc(e.message) + '</div><p>Die App verwendet die zuletzt geladenen Werte.</p><div class="acts"><button class="btn primary" data-act="close">OK</button></div>');
+      if (showResult) dialog('<h3>Laden nicht möglich</h3><div class="err-box">' + esc(e.message) + '</div><p>Die App verwendet die zuletzt geladenen Werte.</p><div class="acts"><button class="btn primary" data-act="close">OK</button></div>');
     }
   }
 
@@ -789,15 +789,15 @@ textarea.in { min-height: 64px; resize: vertical; }
     // Absenderzeile und Kundenadresse (passt ins Fenster eines C5-Couverts links)
     var c = o.customer;
     txt(GREY, F, 'normal', 7);
-    doc.text([fi.firma, fi.strasse, fi.plzOrt].filter(Boolean).join(' Â· '), L, 47);
+    doc.text([fi.firma, fi.strasse, fi.plzOrt].filter(Boolean).join(' · '), L, 47);
     doc.setDrawColor(LINE[0], LINE[1], LINE[2]); doc.setLineWidth(0.2); doc.line(L, 48.2, L + 80, 48.2);
     txt(INK, F, 'normal', 10.5);
     [[c.vorname, c.nachname].filter(Boolean).join(' '), c.strasse, [c.plz, c.ort].filter(Boolean).join(' ')].filter(function (x) { return trimmed(x); })
       .forEach(function (line, i) { doc.text(line, L, 54 + i * 5.2); });
 
-    // Rechts: Nummer, Datum, GÃ¼ltigkeit
+    // Rechts: Nummer, Datum, Gültigkeit
     var info = [['Auftragsnr.', o.orderNo], ['Datum', o.dateText]];
-    if (!isK) info.push(['GÃ¼ltig bis', o.validUntil]);
+    if (!isK) info.push(['Gültig bis', o.validUntil]);
     if (trimmed(c.telefon)) info.push(['Ihre Telefonnr.', trimmed(c.telefon)]);
     info.forEach(function (row, i) {
       txt(GREY, F, 'normal', 9); doc.text(row[0], 132, 54 + i * 5.2);
@@ -807,17 +807,17 @@ textarea.in { min-height: 64px; resize: vertical; }
     // Titel
     var y = 86;
     txt(NAVY, F, 'bold', 16);
-    doc.text((isK ? 'Kaufvertrag / AuftragsbestÃ¤tigung ' : 'Offerte ') + o.orderNo, L, y);
+    doc.text((isK ? 'Kaufvertrag / Auftragsbestätigung ' : 'Offerte ') + o.orderNo, L, y);
     txt(INK, F, 'normal', 10);
-    doc.text(isK ? 'Bestellte Insektenschutz-Elemente nach Mass gemÃ¤ss Aufmass vom ' + o.dateText + ':' : 'Gerne offerieren wir Ihnen folgende Insektenschutz-Elemente nach Mass gemÃ¤ss Aufmass vom ' + o.dateText + ':', L, y + 7, { maxWidth: R - L });
+    doc.text(isK ? 'Bestellte Insektenschutz-Elemente nach Mass gemäss Aufmass vom ' + o.dateText + ':' : 'Gerne offerieren wir Ihnen folgende Insektenschutz-Elemente nach Mass gemäss Aufmass vom ' + o.dateText + ':', L, y + 7, { maxWidth: R - L });
     var body = o.positions.map(function (p) {
-      var masse = fmt2.format(p.breite).replace(/\.00$/, '') + ' Ã— ' + fmt2.format(p.hoehe).replace(/\.00$/, '') + (p.tiefe != null ? '\nTiefe ' + fmt2.format(p.tiefe).replace(/\.00$/, '') : '');
+      var masse = fmt2.format(p.breite).replace(/\.00$/, '') + ' × ' + fmt2.format(p.hoehe).replace(/\.00$/, '') + (p.tiefe != null ? '\nTiefe ' + fmt2.format(p.tiefe).replace(/\.00$/, '') : '');
       var prod = p.produkt + (p.beschreibung ? '\n' + p.beschreibung : '') + '\nFarbe: ' + p.farbe;
       return [String(p.pos), p.bereich + (p.bem ? '\n' + p.bem : ''), prod, p.art, masse, fmt2.format(p.price)];
     });
     doc.autoTable({
       startY: y + 13, margin: { left: L, right: 210 - R, bottom: 22 },
-      head: [['Pos', 'Bereich', 'Produkt', 'Art', 'B Ã— H cm', 'Betrag CHF']],
+      head: [['Pos', 'Bereich', 'Produkt', 'Art', 'B × H cm', 'Betrag CHF']],
       body: body,
       foot: [['', 'Total', '', '', '', fmt2.format(o.totals.total)]],
       styles: { font: F, fontStyle: 'normal', fontSize: 9, cellPadding: 2.2, valign: 'top', textColor: INK, lineColor: LINE, lineWidth: 0.1 },
@@ -830,11 +830,11 @@ textarea.in { min-height: 64px; resize: vertical; }
     txt(NAVY, F, 'bold', 12.5);
     doc.text('Gesamtbetrag CHF ' + fmt2.format(o.totals.total), R, y, { align: 'right' });
     txt(GREY, F, 'normal', 8.5);
-    doc.text('Masse in cm (Breite Ã— HÃ¶he), gemessen vor Ort. Preise in CHF.', L, y + 7);
+    doc.text('Masse in cm (Breite × Höhe), gemessen vor Ort. Preise in CHF.', L, y + 7);
     if (!isK) {
       txt(INK, F, 'normal', 10);
-      doc.text('Diese Offerte ist gÃ¼ltig bis ' + o.validUntil + '. Gerne beraten wir Sie bei Fragen und freuen uns auf Ihren Auftrag.', L, y + 17, { maxWidth: R - L });
-      doc.text('Freundliche GrÃ¼sse', L, y + 30);
+      doc.text('Diese Offerte ist gültig bis ' + o.validUntil + '. Gerne beraten wir Sie bei Fragen und freuen uns auf Ihren Auftrag.', L, y + 17, { maxWidth: R - L });
+      doc.text('Freundliche Grüsse', L, y + 30);
       txt(NAVY, FS, semi, 10.5); doc.text(fi.firma, L, y + 36);
     } else {
       var sy = Math.max(y + 32, 236);
@@ -845,7 +845,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       doc.text('Ort, Datum', L, sy + 5); doc.text('Unterschrift Kunde', L + 60, sy + 5); doc.text('Unterschrift ' + fi.firma, L + 120, sy + 5);
     }
     // Fusszeile auf jeder Seite
-    var foot = [fi.firma, fi.strasse, fi.plzOrt, 'Tel. ' + fi.telefon, fi.email, fi.uid ? 'UID ' + fi.uid : ''].filter(function (x) { return trimmed(x) && x !== 'Tel. '; }).join('  Â·  ');
+    var foot = [fi.firma, fi.strasse, fi.plzOrt, 'Tel. ' + fi.telefon, fi.email, fi.uid ? 'UID ' + fi.uid : ''].filter(function (x) { return trimmed(x) && x !== 'Tel. '; }).join('  ·  ');
     var pages = doc.getNumberOfPages();
     for (var i = 1; i <= pages; i++) {
       doc.setPage(i);
@@ -864,22 +864,22 @@ textarea.in { min-height: 64px; resize: vertical; }
     custMissing().forEach(function (m) { warn.push(m + ' fehlt'); });
     if (!state.elements.length) warn.push('Noch keine Produkte erfasst');
     var bad = state.elements.filter(function (e) { return missing(e).length; });
-    if (bad.length) warn.push(bad.length + (bad.length === 1 ? ' Produkt ist' : ' Produkte sind') + ' unvollstÃ¤ndig');
+    if (bad.length) warn.push(bad.length + (bad.length === 1 ? ' Produkt ist' : ' Produkte sind') + ' unvollständig');
     if (state.editId) warn.push('Ein Produkt ist noch in Bearbeitung (nicht gespeichert)');
-    else if (formHasInput(state.form)) warn.push('Im Formular steht ein angefangenes Produkt, das noch nicht hinzugefÃ¼gt ist');
+    else if (formHasInput(state.form)) warn.push('Im Formular steht ein angefangenes Produkt, das noch nicht hinzugefügt ist');
     if (!state.elements.length) {
       dialog('<h3>Keine Produkte</h3><p>Erfasse zuerst mindestens ein Produkt.</p><div class="acts"><button class="btn primary" data-act="close">OK</button></div>');
       return;
     }
     if (warn.length) {
       dialogActions.force = function () { confirmClose(kind); };
-      dialog('<h3>Noch nicht vollstÃ¤ndig</h3><ul>' + warn.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul><p>Du kannst ergÃ¤nzen oder trotzdem abschliessen.</p>' +
-        '<div class="acts"><button class="btn" data-act="close">ZurÃ¼ck und ergÃ¤nzen</button><button class="btn primary" data-act="force">Trotzdem abschliessen</button></div>');
+      dialog('<h3>Noch nicht vollständig</h3><ul>' + warn.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul><p>Du kannst ergänzen oder trotzdem abschliessen.</p>' +
+        '<div class="acts"><button class="btn" data-act="close">Zurück und ergänzen</button><button class="btn primary" data-act="force">Trotzdem abschliessen</button></div>');
     } else { confirmClose(kind); }
   }
   function confirmClose(kind) {
     if (!configured()) {
-      dialog('<h3>Speichern noch nicht mÃ¶glich</h3><p>Die Verbindung zu deinem Microsoft-Konto ist noch nicht eingerichtet. Deine Erfassung bleibt auf diesem GerÃ¤t erhalten.</p><div class="acts"><button class="btn primary" data-act="close">OK</button></div>');
+      dialog('<h3>Speichern noch nicht möglich</h3><p>Die Verbindung zu deinem Microsoft-Konto ist noch nicht eingerichtet. Deine Erfassung bleibt auf diesem Gerät erhalten.</p><div class="acts"><button class="btn primary" data-act="close">OK</button></div>');
       return;
     }
     if (!account) {
@@ -888,13 +888,13 @@ textarea.in { min-height: 64px; resize: vertical; }
     }
     var t = totals(), doc = kind === 'direkt' ? 'Kaufvertrag' : 'Offerte';
     dialogActions.go = function () { runSave(kind); };
-    dialog('<h3>' + doc + ' erstellen?</h3><div class="doc"><span><b>' + esc([state.customer.vorname, state.customer.nachname].filter(Boolean).join(' ') || 'Ohne Namen') + '</b></span><span>' + t.count + ' Produkte Â· ' + fmt2.format(t.area) + ' mÂ²</span><span>Total CHF ' + fmt2.format(t.total) + '</span></div>' +
-      '<p>Die App vergibt die Auftragsnummer, erstellt das PDF, legt es in OneDrive ab und trÃ¤gt den Auftrag ins BÃ¼ro-Excel ein.</p>' +
+    dialog('<h3>' + doc + ' erstellen?</h3><div class="doc"><span><b>' + esc([state.customer.vorname, state.customer.nachname].filter(Boolean).join(' ') || 'Ohne Namen') + '</b></span><span>' + t.count + ' Produkte · ' + fmt2.format(t.area) + ' m²</span><span>Total CHF ' + fmt2.format(t.total) + '</span></div>' +
+      '<p>Die App vergibt die Auftragsnummer, erstellt das PDF, legt es in OneDrive ab und trägt den Auftrag ins Büro-Excel ein.</p>' +
       '<div class="acts"><button class="btn primary" data-act="go">' + doc + ' erstellen und speichern</button><button class="btn" data-act="close">Abbrechen</button></div>');
   }
-  var STEPS = ['Auftragsnummer vergeben', 'PDF erstellen', 'In OneDrive ablegen', 'Ins BÃ¼ro-Excel eintragen'];
+  var STEPS = ['Auftragsnummer vergeben', 'PDF erstellen', 'In OneDrive ablegen', 'Ins Büro-Excel eintragen'];
   function showSteps(active, failMsg) {
-    var html = '<h3>Speichern â€¦</h3><ul class="steps">' + STEPS.map(function (s, i) {
+    var html = '<h3>Speichern …</h3><ul class="steps">' + STEPS.map(function (s, i) {
       var cls = i < active ? 'done' : (i === active ? (failMsg ? 'fail' : 'run') : '');
       return '<li class="' + cls + '">' + esc(s) + '</li>';
     }).join('') + '</ul>';
@@ -948,12 +948,12 @@ textarea.in { min-height: 64px; resize: vertical; }
       var orderRow = [p.orderNo, p.year, p.laufNr, serial, kind === 'direkt' ? 'Direktbestellung' : 'Offerte',
         trimmed(c.vorname), trimmed(c.nachname), trimmed(c.strasse), trimmed(c.plz), trimmed(c.ort), trimmed(c.telefon), trimmed(c.email),
         tt.count, tt.area, tt.total, docName, p.fileUrl, p.folderUrl,
-        kind === 'direkt' ? 'Keine Offerte â€“ Direktbestellung' : 'Offen', '', 'Noch nicht bestellt', '', '',
+        kind === 'direkt' ? 'Keine Offerte – Direktbestellung' : 'Offen', '', 'Noch nicht bestellt', '', '',
         'Ausstehend', '', '', '', '', '', '', '', '', '', '', state.captureId];
       var posRows = pos.map(function (q) {
-        // 17 Spalten wie tblPositionen: â€¦ Preis pro mÂ² bleibt leer (Preis kommt aus dem Raster), dann Art, Rasterfeld, Preishinweis
+        // 17 Spalten wie tblPositionen: … Preis pro m² bleibt leer (Preis kommt aus dem Raster), dann Art, Rasterfeld, Preishinweis
         return [p.orderNo, q.pos, q.zimmer, q.zusatz, q.bereich, q.produkt, q.farbe, q.breite, q.hoehe, q.tiefe == null ? '' : q.tiefe, q.area, '', q.price, q.bem,
-          q.art, q.feld, q.outside ? 'ausserhalb Raster â€“ bitte prÃ¼fen' : ''];
+          q.art, q.feld, q.outside ? 'ausserhalb Raster – bitte prüfen' : ''];
       });
       await addRows('tblPositionen', posRows);
       await addRows('tblAuftraege', [orderRow]);
@@ -978,10 +978,10 @@ textarea.in { min-height: 64px; resize: vertical; }
     dialog('<div class="ok-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>' +
       '<h3>Gespeichert: ' + esc(r.orderNo) + '</h3>' +
       (r.already ? '<p>Dieser Auftrag war bereits gespeichert. Es wurde nichts doppelt angelegt.</p>' :
-        '<div class="doc"><span><b>' + esc(r.name || 'Ohne Namen') + '</b></span><span>' + doc + ' Â· ' + r.totals.count + ' Produkte Â· ' + fmt2.format(r.totals.area) + ' mÂ²</span><span>Total CHF ' + fmt2.format(r.totals.total) + '</span></div>' +
-        '<p>Das PDF liegt in OneDrive, der Auftrag steht im BÃ¼ro-Excel. Die Eingabe ist fÃ¼r den nÃ¤chsten Kunden geleert.</p>') +
-      '<div class="acts">' + (lastPdf && !r.already ? '<button class="btn primary" data-act="share">PDF an Kunden senden â€¦</button>' : '') +
-      (r.fileUrl ? '<a class="btn" href="' + esc(r.fileUrl) + '" target="_blank" rel="noopener">PDF in OneDrive Ã¶ffnen</a>' : '') +
+        '<div class="doc"><span><b>' + esc(r.name || 'Ohne Namen') + '</b></span><span>' + doc + ' · ' + r.totals.count + ' Produkte · ' + fmt2.format(r.totals.area) + ' m²</span><span>Total CHF ' + fmt2.format(r.totals.total) + '</span></div>' +
+        '<p>Das PDF liegt in OneDrive, der Auftrag steht im Büro-Excel. Die Eingabe ist für den nächsten Kunden geleert.</p>') +
+      '<div class="acts">' + (lastPdf && !r.already ? '<button class="btn primary" data-act="share">PDF an Kunden senden …</button>' : '') +
+      (r.fileUrl ? '<a class="btn" href="' + esc(r.fileUrl) + '" target="_blank" rel="noopener">PDF in OneDrive öffnen</a>' : '') +
       '<button class="btn" data-act="close">Fertig</button></div>');
   }
   $('btnOfferte').addEventListener('click', function () { startClose('offerte'); });
