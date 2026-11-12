@@ -177,6 +177,8 @@ textarea.in { min-height: 64px; resize: vertical; }
 .steps li.fail { color: var(--danger); font-weight: 600; }
 .steps li.fail::before { background: var(--danger); border-color: var(--danger); }
 @keyframes spin { to { transform: rotate(360deg); } }
+.terms { margin: 0; padding-left: 18px !important; font-size: 13.5px; color: var(--fg); }
+.sign-pad { width: 100%; height: 170px; border-radius: 12px; border: 1.5px dashed var(--muted); background: #fff; touch-action: none; display: block; }
 .err-box { background: var(--danger-soft); color: var(--danger); border-radius: 12px; padding: 10px 12px; font-size: 13.5px; word-break: break-word; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .chev { transition: none; } .steps li.run::before { animation: none; } }
@@ -321,14 +323,14 @@ textarea.in { min-height: 64px; resize: vertical; }
     zimmer: ['Schlafzimmer', 'Wohnzimmer', 'Esszimmer', 'Küche', 'WC', 'Badezimmer', 'Büro', 'Gamingzimmer', 'Sonstiges'],
     produkte: [{ name: 'Produkt 1', beschreibung: '' }, { name: 'Produkt 2', beschreibung: '' }, { name: 'Produkt 3', beschreibung: '' }, { name: 'Produkt 4', beschreibung: '' }],
     farben: ['Weiss', 'Anthrazit', 'Sonstige'],
-    firma: { firma: 'FlyGuard Arifi', strasse: 'Rebrainstrasse 17', plzOrt: '8106 Adlikon b. Regensdorf', telefon: '076 419 40 47', email: 'info@flyguard.ch', web: '', uid: 'CHE-225.710.567', gueltigTage: 30 },
+    firma: { firma: 'FlyGuard Arifi', strasse: 'Rebrainstrasse 17', plzOrt: '8106 Adlikon b. Regensdorf', telefon: '076 419 40 47', email: 'info@flyguard.ch', web: '', uid: 'CHE-225.710.567', gueltigTage: 30, zahlungsfrist: 30 },
     regeln: { fenster: { abHoehe: 0, aufB: 20, aufH: 15, rund: 5 }, tuer: { abHoehe: 200, aufB: 37.5, aufH: 15, rund: 5 } },
     raster: {
       fenster: makeGrid(range(70, 150), range(100, 190), function (w, h) { return 200 + 20 * (w - 70) / 10 + 15 * (h - 100) / 10; }),
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '12.11.2026 · 5c';
+  var APP_VERSION = '13.11.2026 · 6';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'farbeText', 'breite', 'hoehe', 'tiefe', 'bem'];
   var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
@@ -603,9 +605,13 @@ textarea.in { min-height: 64px; resize: vertical; }
       }
       var pos = positions(), tot = totals(), now = new Date();
       state.elements = saved;
-      var base = { orderNo: 'MUSTER', dateText: dateCH(now), validUntil: dateCH(addDays(now, firma().gueltigTage || 30)), customer: cust, positions: pos, totals: tot };
+      var base = { orderNo: 'MUSTER', dateText: dateCH(now), validUntil: dateCH(addDays(now, firma().gueltigTage || 30)), customer: cust, signPlace: trimmed(cust.ort), positions: pos, totals: tot };
+      // Beispiel-Unterschrift, damit man sieht, wo sie im Vertrag erscheint
+      var cv = document.createElement('canvas'); cv.width = 600; cv.height = 220;
+      var cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, 600, 220);
+      cx.fillStyle = '#182145'; cx.font = 'italic 76px Georgia, serif'; cx.fillText('A. Muster', 40, 140);
       var blob = await makePdf(Object.assign({ kind: 'offerte' }, base));
-      var blob2 = await makePdf(Object.assign({ kind: 'direkt' }, base));
+      var blob2 = await makePdf(Object.assign({ kind: 'direkt', signature: cv.toDataURL('image/png') }, base));
       lastPreview = [URL.createObjectURL(blob), URL.createObjectURL(blob2)];
       dialog('<h3>Muster-PDF</h3><p>So sehen die Dokumente aus (mit deinen Eingaben oder Beispieldaten).</p><div class="acts">' +
         '<a class="btn primary" href="' + lastPreview[0] + '" target="_blank" rel="noopener">Muster-Offerte öffnen</a>' +
@@ -735,6 +741,7 @@ textarea.in { min-height: 64px; resize: vertical; }
         var KEYS = { firma: 'firma', strasse: 'strasse', plzOrt: 'plz ort', telefon: 'telefon', email: 'e-mail', web: 'webseite', uid: 'uid' };
         Object.keys(KEYS).forEach(function (k) { if (KEYS[k] in map) fa[k] = map[KEYS[k]]; });
         if (Number(map['offerte gültig tage']) > 0) fa.gueltigTage = Number(map['offerte gültig tage']);
+        if (Number(map['zahlungsfrist tage']) > 0) fa.zahlungsfrist = Number(map['zahlungsfrist tage']);
       } catch (e) { /* Einstellungen fehlen: Standardwerte */ }
       master = { produkte: produkte, farben: farben, zimmer: zimmer, regeln: regeln, raster: raster, firma: fa, source: 'Excel', loadedAt: new Date().toLocaleString('de-CH', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) };
       store(KEY_MASTER, master); fillSelects(); renderAll(true);
@@ -837,12 +844,34 @@ textarea.in { min-height: 64px; resize: vertical; }
       doc.text('Freundliche Grüsse', L, y + 30);
       txt(NAVY, FS, semi, 10.5); doc.text(fi.firma, L, y + 36);
     } else {
-      var sy = Math.max(y + 32, 236);
-      if (sy > 265) { doc.addPage(); sy = 50; }
+      // Vertragsbedingungen
+      var ty = y + 17;
+      if (ty > 225) { doc.addPage(); ty = 30; }
+      txt(NAVY, F, 'bold', 10.5); doc.text('Vertragsbedingungen', L, ty); ty += 6;
+      contractTerms(o.totals.total).forEach(function (t) {
+        var head = t[0] + ': ';
+        txt(INK, F, 'bold', 9); var hw = doc.getTextWidth(head);
+        txt(INK, F, 'normal', 9); var lines = doc.splitTextToSize(t[1], R - L - hw);
+        if (ty + lines.length * 4.4 > 255) { doc.addPage(); ty = 30; }
+        txt(INK, F, 'bold', 9); doc.text(head, L, ty);
+        txt(INK, F, 'normal', 9); doc.text(lines, L + hw, ty);
+        ty += lines.length * 4.4 + 2.2;
+      });
+      // Unterschriften
+      var sy = Math.max(ty + 24, 244);
+      if (sy > 268) { doc.addPage(); sy = 60; }
+      txt(INK, F, 'normal', 10);
+      doc.text([o.signPlace, o.dateText].filter(Boolean).join(', '), L, sy - 2);
+      if (o.signature) {
+        var ip = doc.getImageProperties(o.signature), sw = 52, sh = sw * ip.height / ip.width;
+        if (sh > 22) { sh = 22; sw = sh * ip.width / ip.height; }
+        doc.addImage(o.signature, 'PNG', L + 58, sy - sh - 0.5, sw, sh, 'sig', 'FAST');
+      }
+      txt(NAVY, FS, semi, 10); doc.text(fi.firma, L + 120, sy - 2);
       doc.setDrawColor(150, 156, 170); doc.setLineWidth(0.3);
-      doc.line(L, sy, L + 50, sy); doc.line(L + 60, sy, L + 110, sy); doc.line(L + 120, sy, R, sy);
-      txt(INK, F, 'normal', 9);
-      doc.text('Ort, Datum', L, sy + 5); doc.text('Unterschrift Kunde', L + 60, sy + 5); doc.text('Unterschrift ' + fi.firma, L + 120, sy + 5);
+      doc.line(L, sy, L + 50, sy); doc.line(L + 58, sy, L + 112, sy); doc.line(L + 120, sy, R, sy);
+      txt(GREY, F, 'normal', 8.5);
+      doc.text('Ort, Datum', L, sy + 4.5); doc.text('Unterschrift Kunde', L + 58, sy + 4.5); doc.text(fi.firma, L + 120, sy + 4.5);
     }
     // Fusszeile auf jeder Seite
     function joinNonEmpty(arr) { return arr.filter(function (x) { return trimmed(x); }).join('  ·  '); }
@@ -889,11 +918,56 @@ textarea.in { min-height: 64px; resize: vertical; }
       return;
     }
     var t = totals(), doc = kind === 'direkt' ? 'Kaufvertrag' : 'Offerte';
+    if (kind === 'direkt') { signDialog(t); return; }
     dialogActions.go = function () { runSave(kind); };
     dialog('<h3>' + doc + ' erstellen?</h3><div class="doc"><span><b>' + esc([state.customer.vorname, state.customer.nachname].filter(Boolean).join(' ') || 'Ohne Namen') + '</b></span><span>' + t.count + ' Produkte · ' + fmt2.format(t.area) + ' m²</span><span>Total CHF ' + fmt2.format(t.total) + '</span></div>' +
       '<p>Die App vergibt die Auftragsnummer, erstellt das PDF, legt es in OneDrive ab und trägt den Auftrag ins Büro-Excel ein.</p>' +
       '<div class="acts"><button class="btn primary" data-act="go">' + doc + ' erstellen und speichern</button><button class="btn" data-act="close">Abbrechen</button></div>');
   }
+  // ---- Kaufvertrag: Bedingungen (gleich im PDF und im Unterschriftsfenster) ----
+  function contractTerms(total) {
+    var fi = firma();
+    return [
+      ['Bestellung', 'Der Kunde bestellt die oben aufgeführten Insektenschutz-Elemente verbindlich zum Gesamtbetrag von CHF ' + fmt2.format(total) + '.'],
+      ['Lieferung und Montage', 'Die Elemente werden nach Mass gefertigt. Den Montagetermin vereinbaren wir mit Ihnen, sobald die Ware eingetroffen ist.'],
+      ['Zahlung', 'Nach der Montage erhalten Sie die Rechnung, zahlbar innert ' + (fi.zahlungsfrist || 30) + ' Tagen.'],
+      ['Kundenbesuch', 'Der Kunde bestätigt, dass der Besuch und die Vertragsverhandlungen auf seinen ausdrücklichen Wunsch erfolgten (Art. 40c OR).']
+    ];
+  }
+
+  // ---- Unterschrift mit dem Finger ----
+  function initPad(canvas) {
+    var ctx = canvas.getContext('2d'), dpr = window.devicePixelRatio || 1, drawn = false, last = null;
+    function size() {
+      var r = canvas.getBoundingClientRect();
+      canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr);
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = '#182145'; ctx.lineWidth = 2.6 * dpr; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      drawn = false;
+    }
+    function pt(ev) { var r = canvas.getBoundingClientRect(); return { x: (ev.clientX - r.left) * dpr, y: (ev.clientY - r.top) * dpr }; }
+    canvas.addEventListener('pointerdown', function (ev) { ev.preventDefault(); canvas.setPointerCapture(ev.pointerId); last = pt(ev); ctx.beginPath(); ctx.arc(last.x, last.y, ctx.lineWidth / 2, 0, Math.PI * 2); ctx.fillStyle = '#182145'; ctx.fill(); drawn = true; canvas.dispatchEvent(new Event('signchange')); });
+    canvas.addEventListener('pointermove', function (ev) { if (!last) return; ev.preventDefault(); var p = pt(ev); ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke(); last = p; });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (n) { canvas.addEventListener(n, function () { last = null; }); });
+    size();
+    return { clear: function () { size(); canvas.dispatchEvent(new Event('signchange')); }, isEmpty: function () { return !drawn; }, png: function () { return canvas.toDataURL('image/png'); } };
+  }
+  function signDialog(t) {
+    var c = state.customer, name = [c.vorname, c.nachname].filter(Boolean).join(' ') || 'Kunde';
+    var terms = contractTerms(t.total).map(function (x) { return '<li><b>' + esc(x[0]) + ':</b> ' + esc(x[1]) + '</li>'; }).join('');
+    dialog('<h3>Kaufvertrag unterschreiben</h3>' +
+      '<div class="doc"><span><b>' + esc(name) + '</b></span><span>' + t.count + ' Produkte · Total <b>CHF ' + fmt2.format(t.total) + '</b></span></div>' +
+      '<ul class="terms">' + terms + '</ul>' +
+      '<p>Unterschrift ' + esc(name) + ':</p>' +
+      '<canvas id="signPad" class="sign-pad" aria-label="Unterschriftsfeld"></canvas>' +
+      '<div class="acts"><button class="btn primary" data-act="signGo" id="signGo" disabled>Unterschreiben und speichern</button>' +
+      '<button class="btn" data-act="signClear">Unterschrift löschen</button><button class="btn" data-act="close">Abbrechen</button></div>');
+    var pad = initPad($('signPad'));
+    $('signPad').addEventListener('signchange', function () { $('signGo').disabled = pad.isEmpty(); });
+    dialogActions.signClear = function () { pad.clear(); };
+    dialogActions.signGo = function () { if (pad.isEmpty()) return; var png = pad.png(); runSave('direkt', png); };
+  }
+
   var STEPS = ['Auftragsnummer vergeben', 'PDF erstellen', 'In OneDrive ablegen', 'Ins Büro-Excel eintragen'];
   function showSteps(active, failMsg) {
     var html = '<h3>Speichern …</h3><ul class="steps">' + STEPS.map(function (s, i) {
@@ -904,7 +978,7 @@ textarea.in { min-height: 64px; resize: vertical; }
     dialog(html);
   }
 
-  async function runSave(kind) {
+  async function runSave(kind, signature) {
     if (busy) return; busy = true;
     dialogActions.retry = function () { runSave(kind); };
     var step = 0;
@@ -912,6 +986,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       showSteps(0);
       var now = state.pending && state.pending.dateIso ? new Date(state.pending.dateIso) : new Date();
       var p = state.pending && state.pending.kind === kind ? state.pending : { kind: kind, dateIso: now.toISOString() };
+      if (signature) p.signature = signature;   // bleibt für einen erneuten Versuch erhalten
       var rows = await tableRows('tblAuftraege');
       var existing = rows.filter(function (r) { return r[34] === state.captureId; })[0];
       if (existing) {
@@ -927,7 +1002,8 @@ textarea.in { min-height: 64px; resize: vertical; }
 
       step = 1; showSteps(1);
       var pos = positions(), tt = totals(), c = state.customer;
-      var order = { orderNo: p.orderNo, kind: kind, dateText: dateCH(now), validUntil: dateCH(addDays(now, firma().gueltigTage || 30)), customer: c, positions: pos, totals: tt };
+      var order = { orderNo: p.orderNo, kind: kind, dateText: dateCH(now), validUntil: dateCH(addDays(now, firma().gueltigTage || 30)), customer: c, positions: pos, totals: tt,
+        signature: p.signature || null, signPlace: trimmed(c.ort) };
       var pdf = await makePdf(order);
       var docName = kind === 'direkt' ? 'Kaufvertrag' : 'Offerte';
       var person = safeName([c.nachname, c.vorname].filter(Boolean).join(' ')) || 'Kunde';
