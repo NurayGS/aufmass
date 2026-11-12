@@ -330,7 +330,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 6c';
+  var APP_VERSION = '13.11.2026 · 6d';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'farbeText', 'breite', 'hoehe', 'tiefe', 'bem'];
   var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
@@ -786,22 +786,18 @@ textarea.in { min-height: 64px; resize: vertical; }
     var fi = firma(), L = 20, R = 190, isK = o.kind === 'direkt';
     function txt(color, font, style, size) { doc.setTextColor(color[0], color[1], color[2]); doc.setFont(font, style); doc.setFontSize(size); }
 
-    // Briefkopf: Logo links, rechts ein geordneter Firmenblock (linksbündig, feine Linie davor)
+    // Briefkopf: Logo links, rechts die Firmenangaben schlicht in Grau, bündig untereinander,
+    // Adresse und Kontakt mit kleinem Abstand getrennt
     if (assets.logo) doc.addImage(assets.logo, 'PNG', L, 14, 60, 60 * 180 / 856, 'logo', 'FAST');
     else { txt(NAVY, F, 'bold', 18); doc.text(fi.firma, L, 24); }
     var blk = [
-      { t: fi.firma, f: FS, s: semi, z: 9.5, c: NAVY, gap: 0 },
-      { t: fi.strasse, f: F, s: 'normal', z: 8.5, c: INK, gap: 0 },
-      { t: fi.plzOrt, f: F, s: 'normal', z: 8.5, c: INK, gap: 0 },
-      { t: fi.telefon ? 'Tel. ' + fi.telefon : '', f: F, s: 'normal', z: 8.5, c: INK, gap: 1.6 },
-      { t: fi.email, f: F, s: 'normal', z: 8.5, c: INK, gap: 0 },
-      { t: fi.web, f: F, s: 'normal', z: 8.5, c: INK, gap: 0 }
+      { t: fi.firma, gap: 0 }, { t: fi.strasse, gap: 0 }, { t: fi.plzOrt, gap: 0 },
+      { t: fi.telefon ? 'Tel. ' + fi.telefon : '', gap: 1.8 }, { t: fi.email, gap: 0 }, { t: fi.web, gap: 0 }
     ].filter(function (b) { return trimmed(b.t); });
-    var bw = 0;
-    blk.forEach(function (b) { doc.setFont(b.f, b.s); doc.setFontSize(b.z); bw = Math.max(bw, doc.getTextWidth(b.t)); });
+    txt(GREY, F, 'normal', 8.5);
+    var bw = 0; blk.forEach(function (b) { bw = Math.max(bw, doc.getTextWidth(b.t)); });
     var bx = R - bw, by = 16.2;
-    blk.forEach(function (b, i) { by += (i ? 4.1 : 0) + b.gap; txt(b.c, b.f, b.s, b.z); doc.text(b.t, bx, by); });
-    doc.setDrawColor(NAVY[0], NAVY[1], NAVY[2]); doc.setLineWidth(0.6); doc.line(bx - 3.5, 13.2, bx - 3.5, by + 1.2);
+    blk.forEach(function (b, i) { by += (i ? 4.1 : 0) + b.gap; doc.text(b.t, bx, by); });
 
     // Kundenadresse links
     var c = o.customer;
