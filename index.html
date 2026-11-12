@@ -330,7 +330,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 6e';
+  var APP_VERSION = '13.11.2026 · 6f';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'farbeText', 'breite', 'hoehe', 'tiefe', 'bem'];
   var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
@@ -850,20 +850,21 @@ textarea.in { min-height: 64px; resize: vertical; }
       txt(NAVY, FS, semi, 10.5); doc.text(fi.firma, L, y + 36);
     } else {
       // Vertragsbedingungen
-      var ty = y + 17;
-      if (ty > 225) { doc.addPage(); ty = 30; }
+      // Bedingungen und Unterschriften bleiben zusammen: Unterschriften immer unten, knapp oberhalb
+      // der Fusszeile. Reicht der Platz auf der Seite nicht, kommen beide zusammen auf eine neue Seite.
+      txt(INK, F, 'normal', 9);
+      var terms = contractTerms(o.totals.total).map(function (t) { return [t[0], doc.splitTextToSize(t[1], R - L)]; });
+      var termsH = 6;
+      terms.forEach(function (t) { termsH += (t[1].length + 1) * 4.4 + 2.8; });
+      var sy = 266, ty = y + 15;
+      if (ty + termsH > sy - 22) { doc.addPage(); ty = 30; }
       txt(NAVY, F, 'bold', 10.5); doc.text('Vertragsbedingungen', L, ty); ty += 6;
       // Je Bedingung: Titel fett auf eigener Zeile, Text bündig darunter
-      contractTerms(o.totals.total).forEach(function (t) {
-        txt(INK, F, 'normal', 9); var lines = doc.splitTextToSize(t[1], R - L);
-        if (ty + (lines.length + 1) * 4.4 > 255) { doc.addPage(); ty = 30; }
+      terms.forEach(function (t) {
         txt(INK, F, 'bold', 9); doc.text(t[0] + ':', L, ty);
-        txt(INK, F, 'normal', 9); doc.text(lines, L, ty + 4.5);
-        ty += (lines.length + 1) * 4.4 + 3.4;
+        txt(INK, F, 'normal', 9); doc.text(t[1], L, ty + 4.4);
+        ty += (t[1].length + 1) * 4.4 + 2.8;
       });
-      // Unterschriften unten, knapp oberhalb der Fusszeile (reicht der Platz nicht: neue Seite)
-      var sy = 264;
-      if (ty + 30 > sy) { doc.addPage(); sy = 60; }
       txt(INK, F, 'normal', 10);
       doc.text([o.signPlace, o.dateText].filter(Boolean).join(', '), L, sy - 2);
       if (o.signature) {
