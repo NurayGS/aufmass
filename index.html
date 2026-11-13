@@ -423,7 +423,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 7a';
+  var APP_VERSION = '13.11.2026 · 7b';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'farbeText', 'breite', 'hoehe', 'tiefe', 'bem'];
   var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
@@ -1352,6 +1352,18 @@ textarea.in { min-height: 64px; resize: vertical; }
     return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
   }
   function serialText(v) { var d = fromSerial(v); return d ? dateCH(d) : ''; }
+  // Uhrzeit aus dem Nachkomma-Teil (Montagetermin), z. B. "14:00"; leer wenn keine Zeit gespeichert ist
+  function timeOf(v) {
+    if (!hasVal(v)) return '';
+    var n = Number(v); if (!isFinite(n)) return '';
+    var mins = Math.round((n - Math.floor(n)) * 1440); if (mins <= 0 || mins >= 1440) return '';
+    return String(Math.floor(mins / 60)).padStart(2, '0') + ':' + String(mins % 60).padStart(2, '0');
+  }
+  function serialDT(v) {
+    var d = fromSerial(v); if (!d) return '';
+    var t = timeOf(v);
+    return ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'][d.getDay()] + ' ' + dateCH(d) + (t ? ', ' + t + ' Uhr' : '');
+  }
   function isoOf(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   function custName(r) { return [ov(r, 'Vorname'), ov(r, 'Nachname')].map(trimmed).filter(Boolean).join(' '); }
   function findOrder(nr) { return ord.rows.filter(function (r) { return trimmed(ov(r, 'Auftragsnr')) === nr; })[0]; }
@@ -1398,6 +1410,8 @@ textarea.in { min-height: 64px; resize: vertical; }
       html += '<button class="ord" data-nr="' + esc(trimmed(ov(r, 'Auftragsnr'))) + '">' +
         '<span class="l1"><span class="nr">' + esc(ov(r, 'Auftragsnr')) + '</span><span class="nm">' + esc(custName(r) || 'Ohne Namen') + '</span><span class="amt">' + amt + '</span></span>' +
         '<span class="sub">' + esc([trimmed(ov(r, 'Ort')), ov(r, 'Verkaufsart') === 'Direktbestellung' ? 'Kaufvertrag' : 'Offerte', serialText(ov(r, 'Erfasst am'))].filter(Boolean).join(' · ')) + '</span>' +
+        // Geplante Montage (noch nicht montiert) mit Wochentag und Uhrzeit gleich in der Liste
+        ((hasVal(ov(r, 'Montage geplant')) && !hasVal(ov(r, 'Montiert am'))) ? '<span class="sub"><b>Montage ' + esc(serialDT(ov(r, 'Montage geplant'))) + '</b></span>' : '') +
         '<span class="tag ' + stepCls(s) + '">' + esc(s || '–') + '</span></button>';
     });
     box.innerHTML = html;
@@ -1451,7 +1465,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       var F = [
         { f: 'Bestellt am', l: 'Beim Lieferanten bestellt', b: 'Bestellt' },
         { f: 'Eingetroffen am', l: 'Ware eingetroffen', b: 'Eingetroffen' },
-        { f: 'Montage geplant', l: 'Montagetermin', b: 'Termin wählen', pick: true },
+        { f: 'Montage geplant', l: 'Montagetermin', b: 'Termin wählen', pick: true, time: true },
         { f: 'Montiert am', l: 'Montiert', b: 'Montiert' },
         { f: 'Rechnungsdatum', l: 'Rechnung', none: true },
         { f: 'Bezahlt am', l: 'Bezahlt', b: 'Bezahlt', needs: 'Rechnungsdatum' }
@@ -1459,10 +1473,10 @@ textarea.in { min-height: 64px; resize: vertical; }
       var nextF = null; F.forEach(function (x) { if (!nextF && !hasVal(ov(r, x.f))) nextF = x.f; });
       F.forEach(function (x) {
         var v = ov(r, x.f), isNext = nextF === x.f;
-        if (hasVal(v)) steps += stepRow(true, false, x.l, serialText(v), '<button class="chg" data-ordact="edit" data-f="' + esc(x.f) + '" data-label="' + esc(x.l) + '">ändern</button>');
+        if (hasVal(v)) steps += stepRow(true, false, x.l, x.time ? serialDT(v) : serialText(v), '<button class="chg" data-ordact="edit" data-f="' + esc(x.f) + '" data-label="' + esc(x.l) + '"' + (x.time ? ' data-time="1"' : '') + '>ändern</button>');
         else if (x.none) steps += stepRow(false, isNext, x.l, 'Rechnung als PDF folgt in der nächsten App-Version', '');
         else if (x.needs && !hasVal(ov(r, x.needs))) steps += stepRow(false, false, x.l, 'nach der Rechnung', '');
-        else steps += stepRow(false, isNext, x.l, '', '<button class="btn' + (isNext ? ' primary' : '') + '" data-ordact="' + (x.pick ? 'date' : 'set') + '" data-f="' + esc(x.f) + '" data-label="' + esc(x.l) + '">' + esc(x.b) + '</button>');
+        else steps += stepRow(false, isNext, x.l, '', '<button class="btn' + (isNext ? ' primary' : '') + '" data-ordact="' + (x.pick ? 'date' : 'set') + '" data-f="' + esc(x.f) + '" data-label="' + esc(x.l) + '"' + (x.time ? ' data-time="1"' : '') + '>' + esc(x.b) + '</button>');
       });
       if (hasVal(ov(r, 'Rechnungsdatum')) && !hasVal(ov(r, 'Bezahlt am'))) {
         var ms = Number(ov(r, 'Mahnstufe')) || 0;
@@ -1505,15 +1519,26 @@ textarea.in { min-height: 64px; resize: vertical; }
       dialog('<h3>Speichern nicht möglich</h3><div class="err-box">' + esc((e && e.message) || String(e)) + '</div><div class="acts"><button class="btn primary" data-act="close">OK</button></div>');
     }
   }
-  function dateDialog(nr, field, label, current, allowClear) {
-    var d = fromSerial(current) || new Date();
-    dialog('<h3>' + esc(label) + '</h3><input class="in" type="date" id="dlgDate" value="' + isoOf(d) + '" aria-label="Datum">' +
+  // Datum wählen; mit withTime zusätzlich Uhrzeit (Montagetermin). Datum und Zeit liegen in EINER Excel-Zelle.
+  function dateDialog(nr, field, label, current, allowClear, withTime) {
+    var d = fromSerial(current) || new Date(), tm = withTime ? timeOf(current) : '';
+    var dateIn = '<input class="in" type="date" id="dlgDate" value="' + isoOf(d) + '" aria-label="Datum">';
+    dialog('<h3>' + esc(label) + '</h3>' +
+      (withTime ? '<div class="grid2"><div class="field"><label for="dlgDate">Datum</label>' + dateIn + '</div>' +
+        '<div class="field"><label for="dlgTime">Uhrzeit</label><input class="in" type="time" id="dlgTime" step="900" value="' + tm + '"></div></div>' +
+        '<div class="hint" id="dlgHint"></div>' : dateIn) +
       '<div class="acts"><button class="btn primary" data-act="dateGo">Speichern</button>' +
-      (allowClear ? '<button class="btn" data-act="dateClr">Datum entfernen</button>' : '') +
+      (allowClear ? '<button class="btn" data-act="dateClr">' + (withTime ? 'Termin entfernen' : 'Datum entfernen') + '</button>' : '') +
       '<button class="btn" data-act="close">Abbrechen</button></div>');
     dialogActions.dateGo = function () {
       var v = $('dlgDate').value; if (!v) return;
-      var p = v.split('-'); setFields(nr, mapOf(field, excelDate(new Date(+p[0], +p[1] - 1, +p[2]))));
+      var p = v.split('-'), serial = excelDate(new Date(+p[0], +p[1] - 1, +p[2]));
+      if (withTime) {
+        var t = $('dlgTime').value;
+        if (!t) { $('dlgHint').textContent = 'Bitte eine Uhrzeit wählen.'; return; }
+        var hm = t.split(':'); serial += (Number(hm[0]) * 60 + Number(hm[1])) / 1440;
+      }
+      setFields(nr, mapOf(field, serial));
     };
     dialogActions.dateClr = function () { setFields(nr, mapOf(field, '')); };
   }
@@ -1594,8 +1619,8 @@ textarea.in { min-height: 64px; resize: vertical; }
     if (act === 'login') login();
     else if (act === 'back') closeOrder();
     else if (act === 'set') setFields(nr, mapOf(f, excelDate(new Date())));
-    else if (act === 'date') dateDialog(nr, f, b.dataset.label, '', false);
-    else if (act === 'edit') dateDialog(nr, f, b.dataset.label, r ? ov(r, f) : '', true);
+    else if (act === 'date') dateDialog(nr, f, b.dataset.label, '', false, b.dataset.time === '1');
+    else if (act === 'edit') dateDialog(nr, f, b.dataset.label, r ? ov(r, f) : '', true, b.dataset.time === '1');
     else if (act === 'accept') acceptDialog(nr);
     else if (act === 'reject') rejectDialog(nr, false);
     else if (act === 'offerEdit') rejectDialog(nr, true);
