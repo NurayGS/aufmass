@@ -237,9 +237,13 @@ textarea.in { min-height: 64px; resize: vertical; }
   </section>
 
   <!-- 2. Produkte -->
-  <section class="card">
-    <div class="card-h"><h2><span class="step">2.</span> Produkte</h2><span class="badge" id="elemBadge">0 erfasst</span></div>
-    <div class="card-b">
+  <section class="card open" id="prodCard">
+    <button class="toggle" id="prodToggle" aria-expanded="true" aria-controls="prodBody">
+      <span class="grow"><span class="h2" role="heading" aria-level="2"><span class="step">2.</span> Produkte</span></span>
+      <span class="badge" id="elemBadge">0 erfasst</span>
+      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <div class="card-b" id="prodBody">
       <div class="pform" id="pform">
         <!-- Überschrift nur beim Bearbeiten eines bereits erfassten Produkts -->
         <div class="pform-h" id="formHead" hidden><b id="formTitle"></b></div>
@@ -332,7 +336,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 6o';
+  var APP_VERSION = '13.11.2026 · 6p';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'farbeText', 'breite', 'hoehe', 'tiefe', 'bem'];
   var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
@@ -420,7 +424,7 @@ textarea.in { min-height: 64px; resize: vertical; }
   // ================= Zustand =================
   var state = null;
   function emptyForm(carry) { return { zimmer: '', zusatz: '', produkt: carry ? carry.produkt : '', farbe: carry ? carry.farbe : '', farbeText: carry ? (carry.farbeText || '') : '', breite: '', hoehe: '', tiefe: '', bem: '' }; }
-  function emptyState() { return { captureId: uid(), startedAt: new Date().toISOString(), custOpen: true, editId: null, stash: null, customer: {}, elements: [], form: emptyForm(null), pending: null }; }
+  function emptyState() { return { captureId: uid(), startedAt: new Date().toISOString(), custOpen: true, prodOpen: true, editId: null, stash: null, customer: {}, elements: [], form: emptyForm(null), pending: null }; }
   function save() { store(KEY_STATE, state); }
   function blankForm() { var last = state.elements.length ? state.elements[state.elements.length - 1] : null; return emptyForm(last); }
   function formHasInput(f) { return !!(f.zimmer || trimmed(f.zusatz) || trimmed(f.breite) || trimmed(f.hoehe) || trimmed(f.tiefe) || trimmed(f.bem)); }
@@ -547,7 +551,13 @@ textarea.in { min-height: 64px; resize: vertical; }
         '<span class="txt"><span class="ttl">' + esc(name) + '</span>' + sub + '</span><span class="m2">' + m2 + '</span>' + ICON_CHEV + '</button>';
     }).join('');
     $('elemBadge').textContent = state.elements.length + ' erfasst';
+    // Kachel auf-/zugeklappt (wie Kundendaten); ältere Zwischenstände ohne Angabe gelten als offen
+    var open = state.prodOpen !== false;
+    $('prodCard').classList.toggle('open', open);
+    $('prodBody').hidden = !open;
+    $('prodToggle').setAttribute('aria-expanded', String(open));
   }
+  $('prodToggle').addEventListener('click', function () { state.prodOpen = state.prodOpen === false; renderList(); save(); });
   $('list').addEventListener('click', function (ev) {
     var r = ev.target.closest('.row'); if (!r) return;
     var src = state.elements.filter(function (e) { return e.id === r.dataset.id; })[0]; if (!src) return;
