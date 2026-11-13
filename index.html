@@ -330,7 +330,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 6g';
+  var APP_VERSION = '13.11.2026 · 6h';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'farbeText', 'breite', 'hoehe', 'tiefe', 'bem'];
   var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
@@ -829,7 +829,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       startY: y + 13, margin: { left: L, right: 210 - R, bottom: 22 },
       head: [['Pos', 'Bereich', 'Produkt', 'Art', 'B × H cm', 'Betrag CHF']],
       body: body,
-      foot: [['', 'Total', '', '', '', fmt2.format(o.totals.total)]],
+      foot: [['', 'Total', '', '', '', { content: fmt2.format(o.totals.total), styles: { halign: 'right' } }]],
       styles: { font: F, fontStyle: 'normal', fontSize: 9, cellPadding: 2.2, valign: 'top', textColor: INK, lineColor: LINE, lineWidth: 0.1 },
       headStyles: { fillColor: NAVY, textColor: 255, font: F, fontStyle: 'bold' },
       footStyles: { fillColor: [232, 235, 243], textColor: NAVY, font: F, fontStyle: 'bold' },
