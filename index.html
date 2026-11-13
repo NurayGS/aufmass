@@ -242,6 +242,7 @@ textarea.in { min-height: 64px; resize: vertical; }
 .d-kv span:nth-child(odd) { color: var(--muted); }
 .d-fold { width: 100%; display: flex; align-items: center; gap: 8px; border: 0; background: none; color: var(--fg); font: inherit; padding: 0; cursor: pointer; text-align: left; }
 .d-fold .chev { width: 20px; height: 20px; }
+.d-fold .d-h + .chev { margin-left: auto; }
 .d-cost { gap: 8px; }
 .d-cost .fine { margin: 0; }
 .d-cost > .btn { margin-top: 2px; }
@@ -463,7 +464,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 7s';
+  var APP_VERSION = '13.11.2026 · 7t';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   // «lauf» (flache Laufschiene: 'Ja' / 'Nein' / '') hat kein Eingabefeld, sondern den Ja/Nein-Schalter
   // Tiefe wird seit 7h nicht mehr erfasst (alte Aufträge behalten ihre Tiefe im Excel)
@@ -1677,10 +1678,13 @@ textarea.in { min-height: 64px; resize: vertical; }
         return stepRow(true, false, fall + ', ' + (trimmed(gv(g, 'Bereich')) || 'Pos. ' + trimmed(gv(g, 'Pos'))), [trimmed(gv(g, 'Schaden')), wie].filter(Boolean).join(', '),
           hasVal(gv(g, 'Erledigt am')) ? '<button class="chg" data-ordact="edit" data-fall="' + esc(fall) + '" data-f="Erledigt am" data-label="Erledigt">ändern</button>' : '');
       }).join('');
-      html += '<section class="card"><div class="card-b d-cost"><div class="d-hrow"><h3 class="d-h">Garantie</h3></div>' +
-        '<div class="d-kv">' + gkv.map(function (x) { return span(x[0]) + span(x[1]); }).join('') + '</div>' +
-        (zu ? '<div>' + zu + '</div>' : '') +
-        (hasVal(mont) && ord.hasG ? '<button class="btn" data-ordact="gNew">Garantiefall erfassen</button>' : '') +
+      // Auf-/zuklappbar wie «Produkte», beim Öffnen eines Auftrags immer zu
+      var gOpen = !!ord.gOpen;
+      html += '<section class="card"><div class="card-b d-cost"><button class="d-fold' + (gOpen ? ' open' : '') + '" data-ordact="gFold" aria-expanded="' + gOpen + '">' +
+        '<span class="d-h" role="heading" aria-level="3">Garantie</span>' + (faelle.length ? '<span class="cnt">' + faelle.length + '</span>' : '') + ICON_CHEV_DOWN + '</button>' +
+        (gOpen ? '<div class="d-kv">' + gkv.map(function (x) { return span(x[0]) + span(x[1]); }).join('') + '</div>' +
+          (zu ? '<div>' + zu + '</div>' : '') +
+          (hasVal(mont) && ord.hasG ? '<button class="btn" data-ordact="gNew">Garantiefall erfassen</button>' : '') : '') +
         '</div></section>';
     }
     box.innerHTML = html;
@@ -1719,7 +1723,7 @@ textarea.in { min-height: 64px; resize: vertical; }
     return '<section class="card"><div class="card-b"><h3 class="d-h">Garantiefall ' + esc(fall) + '</h3><div>' + rows + '</div>' + extra +
       (foto ? '<div class="d-links"><a class="btn" href="' + esc(foto) + '" target="_blank" rel="noopener">Fotos öffnen</a></div>' : '') + '</div></section>';
   }
-  function openOrder(nr) { ord.sel = nr; $('ordListView').hidden = true; $('ordDetail').hidden = false; renderDetail(); window.scrollTo(0, 0); }
+  function openOrder(nr) { ord.sel = nr; ord.gOpen = false; $('ordListView').hidden = true; $('ordDetail').hidden = false; renderDetail(); window.scrollTo(0, 0); }
   function closeOrder() { ord.sel = null; $('ordDetail').hidden = true; $('ordListView').hidden = false; renderOrders(); window.scrollTo(0, 0); }
 
   // Einzelne Zellen des Auftrags im Excel setzen. Die Zeile wird jedes Mal frisch gesucht,
@@ -2125,6 +2129,7 @@ textarea.in { min-height: 64px; resize: vertical; }
     else if (act === 'reject') rejectDialog(nr, false);
     else if (act === 'offerEdit') rejectDialog(nr, true);
     else if (act === 'cost') costDialog(nr);
+    else if (act === 'gFold') { ord.gOpen = !ord.gOpen; renderDetail(); }
     else if (act === 'prodFold') { try { localStorage.setItem(DET_PROD_KEY, detProdOpen() ? '0' : '1'); } catch (e) {} renderDetail(); }
   });
 
