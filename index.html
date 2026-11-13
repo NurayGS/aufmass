@@ -188,6 +188,59 @@ textarea.in { min-height: 64px; resize: vertical; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .chev { transition: none; } .steps li.run::before { animation: none; } }
 @media (max-width: 340px) { .decide { grid-template-columns: 1fr; } }
+
+/* Reiter unten: Erfassen | Aufträge */
+.wrap { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+.tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 8; background: var(--surface); border-top: 1px solid var(--line);
+  display: grid; grid-template-columns: 1fr 1fr; padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+.tabbar button { border: 0; background: none; min-height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  font: inherit; font-size: 12.5px; font-weight: 600; color: var(--muted); cursor: pointer; }
+.tabbar button svg { width: 24px; height: 24px; }
+.tabbar button.on { color: var(--accent); }
+
+/* Auftragsliste */
+.ord-head { display: flex; gap: 8px; align-items: center; }
+.ord-head .in { flex: 1; }
+.ord-head .icon-btn { width: 48px; height: 48px; }
+.ord-list { display: flex; flex-direction: column; gap: 10px; }
+.ord-grp { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin: 6px 2px 0; }
+.ord { display: flex; flex-direction: column; gap: 6px; width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+  padding: 14px; box-shadow: var(--shadow); cursor: pointer; color: var(--fg); font: inherit; }
+.ord .l1 { display: flex; align-items: baseline; gap: 10px; }
+.ord .nr { font-family: var(--font-num); font-weight: 700; color: var(--muted); font-size: 15px; flex: none; }
+.ord .nm { font-weight: 600; font-size: 17px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ord .amt { font-family: var(--font-num); font-weight: 600; font-size: 16px; font-variant-numeric: tabular-nums; flex: none; }
+.ord .sub { font-size: 13.5px; color: var(--muted); }
+.tag { align-self: flex-start; font-size: 13.5px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--surface-2); color: var(--fg); }
+.tag.red { background: var(--danger-soft); color: var(--danger); }
+.tag.ora { background: var(--warn-soft); color: var(--warn); }
+.tag.grey { color: var(--muted); }
+.empty { text-align: center; color: var(--muted); font-size: 15px; padding: 28px 12px; }
+
+/* Auftrag ansehen */
+.back { align-self: flex-start; border: 0; background: none; color: var(--accent); font: inherit; font-weight: 600; font-size: 16px; padding: 6px 2px; cursor: pointer; }
+.d-title { display: flex; flex-direction: column; gap: 6px; }
+.d-title h2 { margin: 0; font-family: var(--font-num); font-size: 24px; font-weight: 600; }
+.d-lines { display: flex; flex-direction: column; gap: 4px; font-size: 15px; }
+.d-lines a { color: var(--accent); text-decoration: none; font-weight: 600; }
+.d-links { display: flex; gap: 8px; flex-wrap: wrap; }
+.d-links .btn { min-height: 44px; font-size: 15px; }
+.d-prod { display: flex; flex-direction: column; gap: 2px; padding: 10px 0; border-top: 1px solid var(--line); font-size: 14.5px; }
+.d-prod:first-child { border-top: 0; padding-top: 0; }
+.d-prod b { font-weight: 600; }
+.d-prod span { color: var(--muted); font-size: 13.5px; }
+.step-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.step-row:first-child { border-top: 0; }
+.step-row .dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); flex: none; display: grid; place-items: center; }
+.step-row.done .dot { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.step-row .dot svg { width: 14px; height: 14px; }
+.step-row .lbl { flex: 1; min-width: 0; font-size: 15.5px; }
+.step-row .lbl small { display: block; color: var(--muted); font-size: 13px; }
+.step-row .btn { flex: none; min-height: 40px; font-size: 14.5px; padding: 0 12px; }
+.step-row .chg { border: 0; background: none; color: var(--accent); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; padding: 6px; }
+.step-row.next .lbl { font-weight: 600; }
+.d-h { margin: 0; font-family: var(--font-num); font-size: 19px; font-weight: 600; }
+.acts-row .btn { min-height: 48px; }
 </style>
 </head>
 <body>
@@ -213,7 +266,7 @@ textarea.in { min-height: 64px; resize: vertical; }
   </div>
 </header>
 
-<main class="wrap">
+<main class="wrap" id="viewErfassen">
   <div class="notice warn" id="setupNotice" hidden><span><b>Einrichtung noch nicht abgeschlossen:</b> Die Verbindung zu deinem Microsoft-Konto fehlt noch. Erfassen funktioniert, Speichern noch nicht.</span></div>
   <div class="notice warn" id="loginNotice" hidden>
     <span><b>Nicht angemeldet.</b> Zum Speichern einmal mit deinem FlyGuard-Konto anmelden. Erfassen geht auch ohne.</span>
@@ -315,6 +368,31 @@ textarea.in { min-height: 64px; resize: vertical; }
   <div class="fine" id="srcInfo" style="text-align:center"></div>
 </main>
 
+<!-- Reiter «Aufträge»: offene Aufträge aus dem Büro-Excel, Schritte per Knopf eintragen -->
+<main class="wrap" id="viewAuftraege" hidden>
+  <div id="ordListView">
+    <div class="ord-head">
+      <input class="in" id="ordSearch" type="search" placeholder="Suchen: Name, Ort oder Nummer" autocomplete="off" enterkeyhint="search" aria-label="Aufträge suchen">
+      <button class="icon-btn" id="ordReload" aria-label="Neu laden">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+      </button>
+    </div>
+    <div id="ordList" class="ord-list"></div>
+  </div>
+  <div id="ordDetail" class="ord-list" hidden></div>
+</main>
+
+<nav class="tabbar" aria-label="Bereiche">
+  <button id="tabErfassen" class="on" aria-current="page">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5V3h6v1.5M9 10h6M9 14h6M9 18h3"/></svg>
+    Erfassen
+  </button>
+  <button id="tabAuftraege">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/><circle cx="19" cy="18" r="2.2"/></svg>
+    Aufträge
+  </button>
+</nav>
+
 <div class="dlg-bg" id="dlgBg" hidden><div class="dlg" role="alertdialog" aria-modal="true" id="dlg"></div></div>
 
 <script>
@@ -345,7 +423,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 6z';
+  var APP_VERSION = '13.11.2026 · 7a';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'farbeText', 'breite', 'hoehe', 'tiefe', 'bem'];
   var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
@@ -651,10 +729,12 @@ textarea.in { min-height: 64px; resize: vertical; }
       cx.fillStyle = '#182145'; cx.font = 'italic 76px Georgia, serif'; cx.fillText('A. Muster', 40, 140);
       var blob = await makePdf(Object.assign({ kind: 'offerte' }, base));
       var blob2 = await makePdf(Object.assign({ kind: 'direkt', signature: cv.toDataURL('image/png') }, base));
-      lastPreview = [URL.createObjectURL(blob), URL.createObjectURL(blob2)];
+      var blob3 = await makePdf(Object.assign({ kind: 'bestaetigung', offerDate: dateCH(addDays(now, -7)) }, base));
+      lastPreview = [URL.createObjectURL(blob), URL.createObjectURL(blob2), URL.createObjectURL(blob3)];
       dialog('<h3>Muster-PDF</h3><p>So sehen die Dokumente aus (mit deinen Eingaben oder Beispieldaten).</p><div class="acts">' +
         '<a class="btn primary" href="' + lastPreview[0] + '" target="_blank" rel="noopener">Muster-Offerte öffnen</a>' +
         '<a class="btn" href="' + lastPreview[1] + '" target="_blank" rel="noopener">Muster-Kaufvertrag öffnen</a>' +
+        '<a class="btn" href="' + lastPreview[2] + '" target="_blank" rel="noopener">Muster-Auftragsbestätigung öffnen</a>' +
         '<button class="btn" data-act="close">Schliessen</button></div>');
     } catch (e) {
       state.elements = saved;
@@ -690,7 +770,8 @@ textarea.in { min-height: 64px; resize: vertical; }
       if (account) msalApp.setActiveAccount(account);
     } catch (e) { authError = e.message || String(e); }
     renderAuth();
-    if (account) { loadMaster(false); loadOwnSig(); }
+    if (account) { loadMaster(false); loadOwnSig(); if (!$('viewAuftraege').hidden) loadOrders(); }
+    else if (!$('viewAuftraege').hidden) renderOrders();
   }
   function login() { if (!msalApp) { renderAuth(); return; } save(); msalApp.loginRedirect({ scopes: CONFIG.scopes, prompt: 'select_account' }); }
   function logout() { if (!msalApp || !account) return; save(); msalApp.logoutRedirect({ account: account, postLogoutRedirectUri: location.origin + location.pathname }); }
@@ -822,7 +903,8 @@ textarea.in { min-height: 64px; resize: vertical; }
       doc.addFileToVFS('Mont-S.ttf', assets.fonts.semibold); doc.addFont('Mont-S.ttf', 'MontserratSemi', 'normal');
       F = 'Montserrat'; FS = 'MontserratSemi'; semi = 'normal';
     }
-    var fi = firma(), L = 20, R = 190, isK = o.kind === 'direkt';
+    // Arten: 'offerte', 'direkt' (Kaufvertrag mit Unterschrift), 'bestaetigung' (Auftragsbestätigung nach angenommener Offerte)
+    var fi = firma(), L = 20, R = 190, isK = o.kind === 'direkt', isB = o.kind === 'bestaetigung';
     function txt(color, font, style, size) { doc.setTextColor(color[0], color[1], color[2]); doc.setFont(font, style); doc.setFontSize(size); }
     function fitImg(data, maxW, maxH) { var p = doc.getImageProperties(data), w = maxW, h = w * p.height / p.width; if (h > maxH) { h = maxH; w = h * p.width / p.height; } return { w: w, h: h }; }
 
@@ -850,7 +932,7 @@ textarea.in { min-height: 64px; resize: vertical; }
 
     // Rechts nur bei der Offerte: Datum und Gültigkeit. Beim Kaufvertrag steht das Datum
     // im Einleitungssatz und bei der Unterschrift. Die Nummer steht im Titel.
-    var info = isK ? [] : [['Datum', o.dateText], ['Angebot gültig bis', o.validUntil]];
+    var info = (isK || isB) ? [] : [['Datum', o.dateText], ['Angebot gültig bis', o.validUntil]];
     info.forEach(function (row, i) {
       txt(GREY, F, 'normal', 9); doc.text(row[0], 132, 54 + i * 5.2);
       txt(INK, F, 'normal', 9.5); doc.text(row[1], R, 54 + i * 5.2, { align: 'right' });
@@ -859,9 +941,12 @@ textarea.in { min-height: 64px; resize: vertical; }
     // Titel, Einleitungssatz, eine Leerzeile, dann die Tabelle
     var y = 86;
     txt(NAVY, F, 'bold', 15);
-    doc.text((isK ? 'Kaufvertrag / Auftragsbestätigung ' : 'Offerte ') + o.orderNo, L, y);
+    doc.text((isK ? 'Kaufvertrag / Auftragsbestätigung ' : isB ? 'Auftragsbestätigung ' : 'Offerte ') + o.orderNo, L, y);
     txt(INK, F, 'normal', 10);
-    var intro = doc.splitTextToSize(isK ? 'Bestellte Insektenschutz-Elemente nach Mass gemäss Aufmass vom ' + o.dateText + ':' : 'Gerne offerieren wir Ihnen folgende Insektenschutz-Elemente nach Mass gemäss Aufmass vom ' + o.dateText + ':', R - L);
+    var introText = isK ? 'Bestellte Insektenschutz-Elemente nach Mass gemäss Aufmass vom ' + o.dateText + ':'
+      : isB ? 'Vielen Dank für Ihren Auftrag vom ' + o.dateText + '. Wir bestätigen Ihnen folgende Insektenschutz-Elemente nach Mass gemäss unserer Offerte vom ' + o.offerDate + ':'
+      : 'Gerne offerieren wir Ihnen folgende Insektenschutz-Elemente nach Mass gemäss Aufmass vom ' + o.dateText + ':';
+    var intro = doc.splitTextToSize(introText, R - L);
     doc.text(intro, L, y + 7);
     var lh = 10 * doc.getLineHeightFactor() * 25.4 / 72;   // Zeilenabstand bei 10 pt in mm
     var tableTop = y + 7 + (intro.length - 1) * lh + 8;       // letzte Zeile + eine Leerzeile
@@ -886,7 +971,26 @@ textarea.in { min-height: 64px; resize: vertical; }
     txt(NAVY, F, 'bold', 11.5);
     doc.text('Gesamtbetrag CHF ' + fmt2.format(o.totals.total), R, y, { align: 'right' });
     y -= 4;   // Folgetext rückt etwas näher
-    if (!isK) {
+    if (isB) {
+      // Auftragsbestätigung: Bedingungen (ohne «Kundenbesuch», der Kunde unterschreibt hier nicht),
+      // danach Gruss mit eigener Unterschrift wie bei der Offerte; alles bleibt zusammen
+      txt(INK, F, 'normal', 9);
+      var bt = contractTerms(o.totals.total).slice(0, 3).map(function (t) { return [t[0], doc.splitTextToSize(t[1], R - L)]; });
+      var bH = 6 + 14 + (ownSig ? 22 : 8);
+      bt.forEach(function (t) { bH += (t[1].length + 1) * 4.4 + 2.8; });
+      var by2 = y + 15;
+      if (by2 + bH > 274) { doc.addPage(); by2 = 30; }
+      txt(NAVY, F, 'bold', 10.5); doc.text('Bedingungen', L, by2); by2 += 6;
+      bt.forEach(function (t) {
+        txt(INK, F, 'bold', 9); doc.text(t[0] + ':', L, by2);
+        txt(INK, F, 'normal', 9); doc.text(t[1], L, by2 + 4.4);
+        by2 += (t[1].length + 1) * 4.4 + 2.8;
+      });
+      txt(INK, F, 'normal', 10); doc.text('Freundliche Grüsse', L, by2 + 6);
+      var bfy = by2 + 12;
+      if (ownSig) { var os3 = fitImg(ownSig, 45, 16); doc.addImage(ownSig, 'PNG', L, by2 + 8.5, os3.w, os3.h, 'ownsig', 'FAST'); bfy = by2 + 8.5 + os3.h + 4.5; }
+      txt(NAVY, FS, semi, 10.5); doc.text(fi.firma, L, bfy);
+    } else if (!isK) {
       // Schluss: Gültigkeit, Gruss, eigene Unterschrift (falls hinterlegt), Firmenname; nie in die Fusszeile
       if (y + (ownSig ? 54 : 38) > 274) { doc.addPage(); y = 16; }
       txt(INK, F, 'normal', 10);
@@ -1185,9 +1289,16 @@ textarea.in { min-height: 64px; resize: vertical; }
     else if (/^[1-9]\d{8}$/.test(t)) t = '41' + t;
     return /^\d{9,15}$/.test(t) ? t : '';
   }
+  var DOC_NAMES = { offerte: 'Offerte', direkt: 'Kaufvertrag', bestaetigung: 'Auftragsbestätigung' };
+  var DOC_WA = { offerte: 'Ihre Offerte', direkt: 'Ihren Kaufvertrag', bestaetigung: 'Ihre Auftragsbestätigung' };
   function finished(r) {
-    var doc = r.kind === 'direkt' ? 'Kaufvertrag' : 'Offerte';
     state = emptyState(); touched = {}; renderAll(true); window.scrollTo(0, 0);
+    ord.loaded = false;   // Auftragsliste beim nächsten Öffnen neu laden
+    shareDialog(r);
+  }
+  // Fenster nach dem Erstellen eines Dokuments: WhatsApp, PDF teilen, OneDrive (auch für Dokumente aus dem Reiter «Aufträge»)
+  function shareDialog(r) {
+    var doc = DOC_NAMES[r.kind] || 'Dokument';
     dialogActions.share = function () {
       if (!lastPdf) return;
       var f = new File([lastPdf.blob], lastPdf.name, { type: 'application/pdf' });
@@ -1200,7 +1311,7 @@ textarea.in { min-height: 64px; resize: vertical; }
     var waHref = '';
     if (wa) {
       var msgTxt = 'Grüezi' + (r.name ? ' ' + r.name : '') + '\n\nAnschliessend erhalten Sie ' +
-        (r.kind === 'direkt' ? 'Ihren Kaufvertrag' : 'Ihre Offerte') + ' als PDF.\n\nFreundliche Grüsse\nFlyGuard';
+        (DOC_WA[r.kind] || 'Ihr Dokument') + ' als PDF.\n\nFreundliche Grüsse\nFlyGuard';
       waHref = 'whatsapp://send?phone=' + wa + '&text=' + encodeURIComponent(msgTxt);
     }
     dialogActions.waDone = function (a) {
@@ -1208,10 +1319,11 @@ textarea.in { min-height: 64px; resize: vertical; }
       var s = $('dlg').querySelector('[data-act="share"]'); if (s) s.classList.add('primary');
     };
     dialog('<div class="ok-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>' +
-      '<h3>Gespeichert: ' + esc(r.orderNo) + '</h3>' +
+      '<h3>' + esc(r.title || ('Gespeichert: ' + r.orderNo)) + '</h3>' +
       (r.already ? '<p>Dieser Auftrag war bereits gespeichert. Es wurde nichts doppelt angelegt.</p>' :
-        '<div class="doc"><span><b>' + esc(r.name || 'Ohne Namen') + '</b></span><span>' + doc + ' · ' + r.totals.count + ' Produkte · ' + fmt2.format(r.totals.area) + ' m²</span><span>Total CHF ' + fmt2.format(r.totals.total) + '</span></div>' +
-        '<p>Das PDF liegt in OneDrive, der Auftrag steht im Büro-Excel. Die Eingabe ist für den nächsten Kunden geleert.</p>') +
+        '<div class="doc"><span><b>' + esc(r.name || 'Ohne Namen') + '</b></span><span>' + doc + (r.totals ? ' · ' + r.totals.count + ' Produkte · ' + fmt2.format(r.totals.area) + ' m²' : '') + '</span>' +
+        (r.totals ? '<span>Total CHF ' + fmt2.format(r.totals.total) + '</span>' : '') + '</div>' +
+        '<p>' + esc(r.note || 'Das PDF liegt in OneDrive, der Auftrag steht im Büro-Excel. Die Eingabe ist für den nächsten Kunden geleert.') + '</p>') +
       '<div class="acts">' +
       (waHref ? '<a class="btn primary" href="' + esc(waHref) + '" data-act="waDone">① WhatsApp an ' + esc(r.phone) + '</a>' : '') +
       (lastPdf && !r.already ? '<button class="btn' + (waHref ? '' : ' primary') + '" data-act="share">' + (waHref ? '② ' : '') + 'PDF an Kunden senden …</button>' : '') +
@@ -1221,11 +1333,281 @@ textarea.in { min-height: 64px; resize: vertical; }
   $('btnOfferte').addEventListener('click', function () { startClose('offerte'); });
   $('btnDirekt').addEventListener('click', function () { startClose('direkt'); });
 
+  // ================= Reiter «Aufträge» =================
+  // Liest Aufträge und Positionen aus dem Büro-Excel. Die Liste zeigt offene Aufträge (dringendste zuerst),
+  // erledigte nur über die Suche. Schritte werden per Knopf mit Datum direkt ins Excel geschrieben.
+  var ord = { loaded: false, loading: false, loadedAt: 0, H: [], rows: [], PH: [], pos: [], gruende: [], err: '', sel: null, q: '' };
+  var STEP_RED = /Mahnung senden|Betreibung|abgelaufen/, STEP_ORA = /bestellen|vereinbaren|Rechnung erstellen|nachfassen|eintragen|durchführen/;
+  var ICON_OK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  function ov(r, name) { var i = ord.H.indexOf(name); return i < 0 ? '' : r[i]; }
+  function pv(r, name) { var i = ord.PH.indexOf(name); return i < 0 ? '' : r[i]; }
+  function hasVal(v) { return !(v === '' || v == null); }
+  function mapOf(k, v) { var m = {}; m[k] = v; return m; }
+  function stepCls(s) { s = String(s || ''); return STEP_RED.test(s) ? 'red' : STEP_ORA.test(s) ? 'ora' : /^Erledigt/.test(s) ? 'grey' : ''; }
+  function stepRank(s) { var c = stepCls(s); return c === 'red' ? 0 : c === 'ora' ? 1 : c === '' ? 2 : 3; }
+  function fromSerial(v) {
+    if (!hasVal(v)) return null;
+    var n = Number(v); if (!isFinite(n) || n <= 0) return null;
+    var d = new Date(Math.round((n - 25569) * 86400000));
+    return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  }
+  function serialText(v) { var d = fromSerial(v); return d ? dateCH(d) : ''; }
+  function isoOf(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function custName(r) { return [ov(r, 'Vorname'), ov(r, 'Nachname')].map(trimmed).filter(Boolean).join(' '); }
+  function findOrder(nr) { return ord.rows.filter(function (r) { return trimmed(ov(r, 'Auftragsnr')) === nr; })[0]; }
+  function colNum(s) { var n = 0; for (var i = 0; i < s.length; i++) n = n * 26 + (s.charCodeAt(i) - 64); return n; }
+  function colName(n) { var s = ''; while (n > 0) { var m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; }
+
+  async function loadOrders() {
+    if (!configured() || !account) { renderOrders(); return; }
+    ord.loading = true; renderOrders();
+    try {
+      var a = await tableData('tblAuftraege'); ord.H = a.headers; ord.rows = a.rows;
+      var p = await tableData('tblPositionen'); ord.PH = p.headers; ord.pos = p.rows;
+      try { ord.gruende = (await tableRows('tblAblehnungsgruende')).map(function (r) { return trimmed(r[0]); }).filter(Boolean); } catch (e) { ord.gruende = []; }
+      if (!ord.gruende.length) ord.gruende = ['Preis zu hoch', 'Konkurrenzangebot', 'Kunde meldet sich nicht', 'Kein Interesse mehr', 'Sonstiges'];
+      ord.loaded = true; ord.loadedAt = Date.now(); ord.err = '';
+    } catch (e) { ord.err = (e && e.message) || String(e); }
+    ord.loading = false;
+    renderOrders(); if (ord.sel) renderDetail();
+  }
+
+  function renderOrders() {
+    var box = $('ordList');
+    if (!configured() || !account) {
+      box.innerHTML = '<div class="notice warn"><span><b>Nicht angemeldet.</b> Um deine Aufträge zu sehen, einmal mit dem FlyGuard-Konto anmelden.</span>' +
+        '<button class="btn primary" data-ordact="login">Mit FlyGuard-Konto anmelden</button></div>';
+      return;
+    }
+    if (ord.loading && !ord.loaded) { box.innerHTML = '<div class="empty">Aufträge werden geladen …</div>'; return; }
+    if (ord.err) { box.innerHTML = '<div class="err-box">Aufträge konnten nicht geladen werden: ' + esc(ord.err) + '</div>'; return; }
+    var q = trimmed(ord.q).toLowerCase();
+    var list = ord.rows.filter(function (r) { return trimmed(ov(r, 'Auftragsnr')); });
+    if (q) list = list.filter(function (r) { return ['Auftragsnr', 'Vorname', 'Nachname', 'Ort', 'Telefon'].map(function (k) { return ov(r, k); }).join(' ').toLowerCase().indexOf(q) >= 0; });
+    else list = list.filter(function (r) { return stepCls(ov(r, 'Nächster Schritt')) !== 'grey'; });
+    list.sort(function (a, b) {
+      return stepRank(ov(a, 'Nächster Schritt')) - stepRank(ov(b, 'Nächster Schritt')) || (Number(ov(a, 'Erfasst am')) || 0) - (Number(ov(b, 'Erfasst am')) || 0);
+    });
+    if (!list.length) { box.innerHTML = '<div class="empty">' + (q ? 'Kein Auftrag gefunden.' : 'Keine offenen Aufträge.') + '</div>'; return; }
+    var html = '', grp = null;
+    list.forEach(function (r) {
+      var s = ov(r, 'Nächster Schritt'), rk = stepRank(s);
+      var g = q ? 'Suchergebnis' : (rk <= 1 ? 'Zu erledigen' : 'Warten');
+      if (g !== grp) { html += '<div class="ord-grp">' + g + '</div>'; grp = g; }
+      var amt = hasVal(ov(r, 'Betrag CHF')) ? fmt2.format(Number(ov(r, 'Betrag CHF'))) : '';
+      html += '<button class="ord" data-nr="' + esc(trimmed(ov(r, 'Auftragsnr'))) + '">' +
+        '<span class="l1"><span class="nr">' + esc(ov(r, 'Auftragsnr')) + '</span><span class="nm">' + esc(custName(r) || 'Ohne Namen') + '</span><span class="amt">' + amt + '</span></span>' +
+        '<span class="sub">' + esc([trimmed(ov(r, 'Ort')), ov(r, 'Verkaufsart') === 'Direktbestellung' ? 'Kaufvertrag' : 'Offerte', serialText(ov(r, 'Erfasst am'))].filter(Boolean).join(' · ')) + '</span>' +
+        '<span class="tag ' + stepCls(s) + '">' + esc(s || '–') + '</span></button>';
+    });
+    box.innerHTML = html;
+  }
+
+  function stepRow(done, next, label, sub, btnHtml) {
+    return '<div class="step-row' + (done ? ' done' : '') + (next ? ' next' : '') + '"><span class="dot">' + (done ? ICON_OK : '') + '</span>' +
+      '<span class="lbl">' + esc(label) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>' + (btnHtml || '') + '</div>';
+  }
+  function renderDetail() {
+    var r = findOrder(ord.sel), box = $('ordDetail');
+    if (!r) { closeOrder(); return; }
+    var nr = trimmed(ov(r, 'Auftragsnr')), s = ov(r, 'Nächster Schritt'), offerte = ov(r, 'Verkaufsart') === 'Offerte', st = trimmed(ov(r, 'Offertenstatus'));
+    var tel = trimmed(ov(r, 'Telefon')), mail = trimmed(ov(r, 'E-Mail'));
+    var plzOrt = [trimmed(ov(r, 'PLZ')), trimmed(ov(r, 'Ort'))].filter(Boolean).join(' ');
+    var lines = [trimmed(ov(r, 'Strasse')), plzOrt].filter(Boolean).map(function (x) { return '<span>' + esc(x) + '</span>'; });
+    if (tel) lines.push('<a href="tel:' + esc(tel.replace(/[^\d+]/g, '')) + '">' + esc(tel) + '</a>');
+    if (mail) lines.push('<a href="mailto:' + esc(mail) + '">' + esc(mail) + '</a>');
+    var doc = trimmed(ov(r, 'Dokument-Link')), dir = trimmed(ov(r, 'Ordner-Link'));
+    var html = '<button class="back" data-ordact="back">‹ Alle Aufträge</button>' +
+      '<section class="card"><div class="card-b">' +
+      '<div class="d-title"><span class="fine">Auftrag ' + esc(nr) + ' · ' + (offerte ? 'Offerte' : 'Kaufvertrag') + ' · erfasst ' + esc(serialText(ov(r, 'Erfasst am'))) + '</span>' +
+      '<h2>' + esc(custName(r) || 'Ohne Namen') + '</h2><span class="tag ' + stepCls(s) + '">' + esc(s || '–') + '</span></div>' +
+      (lines.length ? '<div class="d-lines">' + lines.join('') + '</div>' : '') +
+      '<div class="kv total"><span>Betrag</span><span class="v">CHF ' + fmt2.format(Number(ov(r, 'Betrag CHF')) || 0) + '</span></div>' +
+      ((doc || dir) ? '<div class="d-links">' + (doc ? '<a class="btn" href="' + esc(doc) + '" target="_blank" rel="noopener">PDF öffnen</a>' : '') +
+        (dir ? '<a class="btn" href="' + esc(dir) + '" target="_blank" rel="noopener">Ordner öffnen</a>' : '') + '</div>' : '') +
+      '</div></section>';
+
+    // Produkte aus dem Blatt «Positionen»
+    var pos = ord.pos.filter(function (p) { return trimmed(pv(p, 'Auftragsnr')) === nr; })
+      .sort(function (a, b) { return (Number(pv(a, 'Pos')) || 0) - (Number(pv(b, 'Pos')) || 0); });
+    if (pos.length) {
+      html += '<section class="card"><div class="card-b"><h3 class="d-h">Produkte</h3><div>' + pos.map(function (p) {
+        var masse = [pv(p, 'Breite cm'), pv(p, 'Höhe cm')].filter(hasVal).join(' × ');
+        var info = [trimmed(pv(p, 'Produkt')), trimmed(pv(p, 'Farbe')), masse ? masse + ' cm' : '', hasVal(pv(p, 'Preis CHF')) ? 'CHF ' + fmt2.format(Number(pv(p, 'Preis CHF'))) : ''].filter(Boolean).join(' · ');
+        return '<div class="d-prod"><b>' + esc(pv(p, 'Pos')) + ' · ' + esc(trimmed(pv(p, 'Bereich')) || '–') + '</b><span>' + esc(info) + '</span>' +
+          (trimmed(pv(p, 'Bemerkung')) ? '<span>' + esc(pv(p, 'Bemerkung')) + '</span>' : '') + '</div>';
+      }).join('') + '</div></div></section>';
+    }
+
+    // Ablauf: Offerte, dann die Auftragsschritte
+    var steps = '';
+    if (offerte) {
+      if (st === 'Abgelehnt') steps += stepRow(true, false, 'Offerte abgelehnt', trimmed(ov(r, 'Ablehnungsgrund')) || 'Grund fehlt noch', '<button class="chg" data-ordact="offerEdit">ändern</button>');
+      else if (st === 'Angenommen') steps += stepRow(true, false, 'Offerte angenommen', '', '');
+      else steps += stepRow(false, true, 'Offerte', 'Der Kunde hat noch nicht entschieden', '') +
+        '<div class="acts-row"><button class="btn primary" data-ordact="accept">Angenommen</button><button class="btn" data-ordact="reject">Abgelehnt</button></div>';
+    }
+    if (!offerte || st === 'Angenommen') {
+      var F = [
+        { f: 'Bestellt am', l: 'Beim Lieferanten bestellt', b: 'Bestellt' },
+        { f: 'Eingetroffen am', l: 'Ware eingetroffen', b: 'Eingetroffen' },
+        { f: 'Montage geplant', l: 'Montagetermin', b: 'Termin wählen', pick: true },
+        { f: 'Montiert am', l: 'Montiert', b: 'Montiert' },
+        { f: 'Rechnungsdatum', l: 'Rechnung', none: true },
+        { f: 'Bezahlt am', l: 'Bezahlt', b: 'Bezahlt', needs: 'Rechnungsdatum' }
+      ];
+      var nextF = null; F.forEach(function (x) { if (!nextF && !hasVal(ov(r, x.f))) nextF = x.f; });
+      F.forEach(function (x) {
+        var v = ov(r, x.f), isNext = nextF === x.f;
+        if (hasVal(v)) steps += stepRow(true, false, x.l, serialText(v), '<button class="chg" data-ordact="edit" data-f="' + esc(x.f) + '" data-label="' + esc(x.l) + '">ändern</button>');
+        else if (x.none) steps += stepRow(false, isNext, x.l, 'Rechnung als PDF folgt in der nächsten App-Version', '');
+        else if (x.needs && !hasVal(ov(r, x.needs))) steps += stepRow(false, false, x.l, 'nach der Rechnung', '');
+        else steps += stepRow(false, isNext, x.l, '', '<button class="btn' + (isNext ? ' primary' : '') + '" data-ordact="' + (x.pick ? 'date' : 'set') + '" data-f="' + esc(x.f) + '" data-label="' + esc(x.l) + '">' + esc(x.b) + '</button>');
+      });
+      if (hasVal(ov(r, 'Rechnungsdatum')) && !hasVal(ov(r, 'Bezahlt am'))) {
+        var ms = Number(ov(r, 'Mahnstufe')) || 0;
+        steps += stepRow(ms > 0, false, 'Mahnungen', ms ? ms + '. Mahnung am ' + serialText(ov(r, 'Letzte Mahnung')) : 'Noch keine. Mahnungen als PDF folgen in der nächsten App-Version', '');
+      }
+    }
+    html += '<section class="card"><div class="card-b"><h3 class="d-h">Ablauf</h3><div>' + steps + '</div></div></section>';
+    box.innerHTML = html;
+  }
+  function openOrder(nr) { ord.sel = nr; $('ordListView').hidden = true; $('ordDetail').hidden = false; renderDetail(); window.scrollTo(0, 0); }
+  function closeOrder() { ord.sel = null; $('ordDetail').hidden = true; $('ordListView').hidden = false; renderOrders(); window.scrollTo(0, 0); }
+
+  // Einzelne Zellen des Auftrags im Excel setzen. Die Zeile wird jedes Mal frisch gesucht,
+  // weil die Tabelle im Excel inzwischen sortiert oder gefiltert sein kann.
+  var wsIdCache = null;
+  async function writeOrderCells(nr, map) {
+    var id = await workbookId();
+    var t = await tableData('tblAuftraege'), H = t.headers, iNr = H.indexOf('Auftragsnr'), idx = -1;
+    t.rows.forEach(function (r, i) { if (idx < 0 && trimmed(r[iNr]) === nr) idx = i; });
+    if (idx < 0) throw new Error('Auftrag ' + nr + ' wurde im Büro-Excel nicht gefunden.');
+    var rng = await graph('GET', '/me/drive/items/' + id + '/workbook/tables/tblAuftraege/rows/itemAt(index=' + idx + ')/range');
+    var m = /!\$?([A-Z]+)\$?(\d+)/.exec(String(rng.address || ''));
+    if (!m) throw new Error('Zeile im Büro-Excel nicht gefunden.');
+    var c0 = colNum(m[1]), row = Number(m[2]);
+    if (!wsIdCache) { var ws = await graph('GET', '/me/drive/items/' + id + '/workbook/tables/tblAuftraege/worksheet'); wsIdCache = ws.id; }
+    for (var k in map) {
+      var j = H.indexOf(k); if (j < 0) throw new Error('Spalte «' + k + '» fehlt im Büro-Excel.');
+      await graph('PATCH', '/me/drive/items/' + id + '/workbook/worksheets/' + encodeURIComponent(wsIdCache) + "/range(address='" + colName(c0 + j) + row + "')", { values: [[map[k]]] });
+    }
+  }
+  async function setFields(nr, map) {
+    busy = true;
+    dialog('<h3>Wird gespeichert …</h3><p>Eintrag ins Büro-Excel</p>');
+    try {
+      await writeOrderCells(nr, map);
+      await loadOrders();
+      busy = false; closeDialog();
+    } catch (e) {
+      busy = false;
+      dialog('<h3>Speichern nicht möglich</h3><div class="err-box">' + esc((e && e.message) || String(e)) + '</div><div class="acts"><button class="btn primary" data-act="close">OK</button></div>');
+    }
+  }
+  function dateDialog(nr, field, label, current, allowClear) {
+    var d = fromSerial(current) || new Date();
+    dialog('<h3>' + esc(label) + '</h3><input class="in" type="date" id="dlgDate" value="' + isoOf(d) + '" aria-label="Datum">' +
+      '<div class="acts"><button class="btn primary" data-act="dateGo">Speichern</button>' +
+      (allowClear ? '<button class="btn" data-act="dateClr">Datum entfernen</button>' : '') +
+      '<button class="btn" data-act="close">Abbrechen</button></div>');
+    dialogActions.dateGo = function () {
+      var v = $('dlgDate').value; if (!v) return;
+      var p = v.split('-'); setFields(nr, mapOf(field, excelDate(new Date(+p[0], +p[1] - 1, +p[2]))));
+    };
+    dialogActions.dateClr = function () { setFields(nr, mapOf(field, '')); };
+  }
+  function rejectDialog(nr, editing) {
+    var r = findOrder(nr), cur = r ? trimmed(ov(r, 'Ablehnungsgrund')) : '';
+    dialog('<h3>' + (editing ? 'Ablehnung ändern' : 'Offerte abgelehnt') + '</h3><p>Warum hat der Kunde abgelehnt?</p>' +
+      '<select class="in" id="rejWhy" aria-label="Ablehnungsgrund">' + ord.gruende.map(function (g) { return '<option' + (g === cur ? ' selected' : '') + '>' + esc(g) + '</option>'; }).join('') + '</select>' +
+      '<div class="acts"><button class="btn primary" data-act="rejGo">' + (editing ? 'Grund speichern' : 'Als abgelehnt eintragen') + '</button>' +
+      (editing ? '<button class="btn" data-act="reopen">Offerte wieder offen</button>' : '') +
+      '<button class="btn" data-act="close">Abbrechen</button></div>');
+    dialogActions.rejGo = function () { setFields(nr, { 'Offertenstatus': 'Abgelehnt', 'Ablehnungsgrund': $('rejWhy').value }); };
+    dialogActions.reopen = function () { setFields(nr, { 'Offertenstatus': 'Offen', 'Ablehnungsgrund': '' }); };
+  }
+  function acceptDialog(nr) {
+    var r = findOrder(nr); if (!r) return;
+    dialog('<h3>Offerte angenommen?</h3><div class="doc"><span><b>' + esc(custName(r) || 'Ohne Namen') + '</b></span><span>Offerte ' + esc(nr) + ' · CHF ' + fmt2.format(Number(ov(r, 'Betrag CHF')) || 0) + '</span></div>' +
+      '<p>Die App trägt «Angenommen» ins Büro-Excel ein und legt eine Auftragsbestätigung als PDF in den Auftragsordner.</p>' +
+      '<div class="acts"><button class="btn primary" data-act="accGo">Ja, Auftragsbestätigung erstellen</button><button class="btn" data-act="close">Abbrechen</button></div>');
+    dialogActions.accGo = function () { acceptOffer(nr); };
+  }
+  async function acceptOffer(nr) {
+    var r = findOrder(nr); if (!r || busy) return;
+    busy = true;
+    dialog('<h3>Auftragsbestätigung …</h3><p>Wird erstellt und gespeichert.</p>');
+    try {
+      var now = new Date();
+      var pos = ord.pos.filter(function (p) { return trimmed(pv(p, 'Auftragsnr')) === nr; })
+        .sort(function (a, b) { return (Number(pv(a, 'Pos')) || 0) - (Number(pv(b, 'Pos')) || 0); })
+        .map(function (p) {
+          var prod = trimmed(pv(p, 'Produkt'));
+          return { pos: Number(pv(p, 'Pos')) || 0, bereich: trimmed(pv(p, 'Bereich')), bem: trimmed(pv(p, 'Bemerkung')), produkt: prod, beschreibung: beschreibungFor(prod),
+            farbe: trimmed(pv(p, 'Farbe')), art: trimmed(pv(p, 'Art')), breite: Number(pv(p, 'Breite cm')) || 0, hoehe: Number(pv(p, 'Höhe cm')) || 0,
+            tiefe: hasVal(pv(p, 'Tiefe cm')) ? Number(pv(p, 'Tiefe cm')) : null, price: Number(pv(p, 'Preis CHF')) || 0 };
+        });
+      if (!pos.length) throw new Error('Zu diesem Auftrag gibt es im Blatt «Positionen» keine Produkte.');
+      var total = hasVal(ov(r, 'Betrag CHF')) ? Number(ov(r, 'Betrag CHF')) : pos.reduce(function (s, p) { return s + p.price; }, 0);
+      var cust = { vorname: trimmed(ov(r, 'Vorname')), nachname: trimmed(ov(r, 'Nachname')), strasse: trimmed(ov(r, 'Strasse')), plz: trimmed(ov(r, 'PLZ')), ort: trimmed(ov(r, 'Ort')), telefon: trimmed(ov(r, 'Telefon')) };
+      var pdf = await makePdf({ kind: 'bestaetigung', orderNo: nr, dateText: dateCH(now), offerDate: serialText(ov(r, 'Erfasst am')), customer: cust, positions: pos,
+        totals: { total: total, count: pos.length, area: Number(ov(r, 'Fläche m²')) || 0 } });
+      // Ablage im bestehenden Auftragsordner (Name aus dem Ordner-Link)
+      var person = safeName([cust.nachname, cust.vorname].filter(Boolean).join(' ')) || 'Kunde';
+      var folder = '';
+      try { folder = decodeURIComponent(trimmed(ov(r, 'Ordner-Link')).split('/').pop()); } catch (e) { folder = ''; }
+      if (!folder) folder = safeName(nr + ' Offerte ' + person);
+      var fileName = 'Auftragsbestätigung_' + nr + '_' + person.replace(/ /g, '_') + '.pdf';
+      var file = await graph('PUT', '/me/drive/root:/' + encPath(CONFIG.basePath + '/' + CONFIG.ordersFolder + '/' + folder + '/' + fileName) + ':/content', pdf, 'application/pdf');
+      await writeOrderCells(nr, { 'Offertenstatus': 'Angenommen' });
+      await loadOrders();
+      busy = false;
+      lastPdf = { blob: pdf, name: fileName };
+      shareDialog({ kind: 'bestaetigung', orderNo: nr, name: custName(r), phone: cust.telefon, fileUrl: file.webUrl, totals: { total: total, count: pos.length, area: Number(ov(r, 'Fläche m²')) || 0 },
+        title: 'Auftragsbestätigung ' + nr, note: 'Die Offerte ist im Büro-Excel als angenommen eingetragen. Das PDF liegt im Auftragsordner in OneDrive.' });
+    } catch (e) {
+      busy = false;
+      dialog('<h3>Nicht gespeichert</h3><div class="err-box">' + esc((e && e.message) || String(e)) + '</div><p>Es wurde nichts als angenommen eingetragen. Du kannst es nochmals versuchen.</p><div class="acts"><button class="btn primary" data-act="close">OK</button></div>');
+    }
+  }
+
+  // Reiter umschalten (bleibt innerhalb einer Sitzung erhalten, z. B. nach der Anmeldung)
+  function showTab(t) {
+    var a = t === 'auftraege';
+    $('viewErfassen').hidden = a; $('viewAuftraege').hidden = !a;
+    $('tabErfassen').classList.toggle('on', !a); $('tabAuftraege').classList.toggle('on', a);
+    if (a) { $('tabAuftraege').setAttribute('aria-current', 'page'); $('tabErfassen').removeAttribute('aria-current'); }
+    else { $('tabErfassen').setAttribute('aria-current', 'page'); $('tabAuftraege').removeAttribute('aria-current'); }
+    try { sessionStorage.setItem('flyguard-reiter', t); } catch (e) { /* egal */ }
+    toggleMenu(false); window.scrollTo(0, 0);
+    if (a) { if (account && !ord.loading && (!ord.loaded || Date.now() - ord.loadedAt > 120000)) loadOrders(); else renderOrders(); }
+  }
+  $('tabErfassen').addEventListener('click', function () { showTab('erfassen'); });
+  $('tabAuftraege').addEventListener('click', function () { if (ord.sel) closeOrder(); showTab('auftraege'); });
+  $('ordSearch').addEventListener('input', function () { ord.q = this.value; renderOrders(); });
+  $('ordReload').addEventListener('click', function () { loadOrders(); });
+  $('viewAuftraege').addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-ordact], .ord'); if (!b) return;
+    if (b.classList.contains('ord')) { openOrder(b.dataset.nr); return; }
+    var act = b.dataset.ordact, f = b.dataset.f, nr = ord.sel, r = nr ? findOrder(nr) : null;
+    if (act === 'login') login();
+    else if (act === 'back') closeOrder();
+    else if (act === 'set') setFields(nr, mapOf(f, excelDate(new Date())));
+    else if (act === 'date') dateDialog(nr, f, b.dataset.label, '', false);
+    else if (act === 'edit') dateDialog(nr, f, b.dataset.label, r ? ov(r, f) : '', true);
+    else if (act === 'accept') acceptDialog(nr);
+    else if (act === 'reject') rejectDialog(nr, false);
+    else if (act === 'offerEdit') rejectDialog(nr, true);
+  });
+
   // ================= Start =================
   state = restore(KEY_STATE);
   if (!state || !Array.isArray(state.elements) || !state.form) state = emptyState();
   fillSelects();
   renderAll(true);
+  var startTab = null; try { startTab = sessionStorage.getItem('flyguard-reiter'); } catch (e) { startTab = null; }
+  if (startTab === 'auftraege') showTab('auftraege');
   initAuth();
 })();
 </script>
