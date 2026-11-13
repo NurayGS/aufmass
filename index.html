@@ -332,7 +332,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 6l';
+  var APP_VERSION = '13.11.2026 · 6m';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'farbeText', 'breite', 'hoehe', 'tiefe', 'bem'];
   var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
@@ -1149,8 +1149,8 @@ textarea.in { min-height: 64px; resize: vertical; }
     var wa = (!r.already && lastPdf) ? waNumber(r.phone) : '';
     var waHref = '';
     if (wa) {
-      var msgTxt = 'Grüezi' + (r.name ? ' ' + r.name : '') + '\n\nGleich anschliessend erhalten Sie ' +
-        (r.kind === 'direkt' ? 'Ihren Kaufvertrag ' : 'Ihre Offerte ') + r.orderNo + ' als PDF.\n\nFreundliche Grüsse\n' + firma().firma;
+      var msgTxt = 'Grüezi' + (r.name ? ' ' + r.name : '') + '\n\nAnschliessend erhalten Sie ' +
+        (r.kind === 'direkt' ? 'Ihren Kaufvertrag' : 'Ihre Offerte') + ' als PDF.\n\nFreundliche Grüsse\nFlyGuard';
       waHref = 'whatsapp://send?phone=' + wa + '&text=' + encodeURIComponent(msgTxt);
     }
     dialogActions.waDone = function (a) {
