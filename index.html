@@ -204,15 +204,17 @@ textarea.in { min-height: 64px; resize: vertical; }
 .ord-head { display: flex; gap: 8px; align-items: center; }
 .ord-head .in { flex: 1; }
 .ord-head .icon-btn { width: 48px; height: 48px; }
-.ord-list { display: flex; flex-direction: column; gap: 10px; }
-.ord-grp { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin: 6px 2px 0; }
-.ord { display: flex; flex-direction: column; gap: 6px; width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+.ord-list { display: flex; flex-direction: column; gap: 8px; }
+.ord-grp { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: var(--fg); margin: 14px 4px 0; }
+.ord-grp:first-child { margin-top: 10px; }
+.ord-grp .cnt { margin-left: auto; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--chip); color: var(--chip-fg); font-variant-numeric: tabular-nums; }
+.ord { display: flex; flex-direction: column; gap: 4px; width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
   padding: 14px; box-shadow: var(--shadow); cursor: pointer; color: var(--fg); font: inherit; }
-.ord .l1 { display: flex; align-items: baseline; gap: 10px; }
-.ord .nr { font-family: var(--font-num); font-weight: 700; color: var(--muted); font-size: 15px; flex: none; }
-.ord .nm { font-weight: 600; font-size: 17px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ord .amt { font-family: var(--font-num); font-weight: 600; font-size: 16px; font-variant-numeric: tabular-nums; flex: none; }
-.ord .sub { font-size: 13.5px; color: var(--muted); }
+.ord .l1 { display: flex; align-items: baseline; font-size: 14px; color: var(--fg); }
+.ord .who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ord .nr { flex: none; white-space: nowrap; }
+.ord .amt { flex: none; margin-left: auto; padding-left: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ord .sub { font-size: 14px; color: var(--muted); }
 .tag { align-self: flex-start; font-size: 13.5px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--surface-2); color: var(--fg); }
 .tag.red { background: var(--danger-soft); color: var(--danger); }
 .tag.ora { background: var(--warn-soft); color: var(--warn); }
@@ -430,7 +432,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 7l';
+  var APP_VERSION = '13.11.2026 · 7m';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   // «lauf» (flache Laufschiene: 'Ja' / 'Nein' / '') hat kein Eingabefeld, sondern den Ja/Nein-Schalter
   // Tiefe wird seit 7h nicht mehr erfasst (alte Aufträge behalten ihre Tiefe im Excel)
@@ -1380,6 +1382,11 @@ textarea.in { min-height: 64px; resize: vertical; }
   function mapOf(k, v) { var m = {}; m[k] = v; return m; }
   function stepCls(s) { s = String(s || ''); return STEP_RED.test(s) ? 'red' : STEP_ORA.test(s) ? 'ora' : /^Erledigt/.test(s) ? 'grey' : ''; }
   function stepRank(s) { var c = stepCls(s); return c === 'red' ? 0 : c === 'ora' ? 1 : c === '' ? 2 : 3; }
+  // Position im Ablauf (Texte wie in der Excel-Formel «Nächster Schritt»); unbekannt = -1
+  var STEP_FLOW = [/^Warten auf Entscheid/, /^Offerte nachfassen/, /^Offerte abgelaufen/, /^Ablehnungsgrund/, /^Beim Lieferanten/, /^Warten auf Lieferung/,
+    /^Montagetermin/, /^Montage geplant/, /^Montage durchf/, /^Rechnung erstellen/, /^Warten auf Zahlung/, /^1\. Mahnung/, /^2\. Mahnung/, /^3\. Mahnung/,
+    /^Betreibung/, /^Erledigt – abgelehnt/, /^Erledigt – bezahlt/];
+  function stepFlow(s) { s = String(s || ''); for (var i = 0; i < STEP_FLOW.length; i++) if (STEP_FLOW[i].test(s)) return i; return -1; }
   function fromSerial(v) {
     if (!hasVal(v)) return null;
     var n = Number(v); if (!isFinite(n) || n <= 0) return null;
@@ -1432,22 +1439,29 @@ textarea.in { min-height: 64px; resize: vertical; }
     var list = ord.rows.filter(function (r) { return trimmed(ov(r, 'Auftragsnr')); });
     if (q) list = list.filter(function (r) { return ['Auftragsnr', 'Vorname', 'Nachname', 'Ort', 'Telefon'].map(function (k) { return ov(r, k); }).join(' ').toLowerCase().indexOf(q) >= 0; });
     else list = list.filter(function (r) { return stepCls(ov(r, 'Nächster Schritt')) !== 'grey'; });
-    list.sort(function (a, b) {
-      return stepRank(ov(a, 'Nächster Schritt')) - stepRank(ov(b, 'Nächster Schritt')) || (Number(ov(a, 'Erfasst am')) || 0) - (Number(ov(b, 'Erfasst am')) || 0);
-    });
     if (!list.length) { box.innerHTML = '<div class="empty">' + (q ? 'Kein Auftrag gefunden.' : 'Keine offenen Aufträge.') + '</div>'; return; }
+    // Gruppiert nach «Nächster Schritt» (= Titel): Dringendes zuerst, dann was zu tun ist, dann Warten, Erledigtes zuletzt.
+    // Innerhalb gleicher Dringlichkeit steht der spätere Schritt im Ablauf oben (näher an der Zahlung).
+    // In einer Gruppe: geplante Montagen nach Termin, sonst ältester Auftrag zuerst.
+    var items = list.map(function (r) {
+      var s = trimmed(ov(r, 'Nächster Schritt')), mg = Number(ov(r, 'Montage geplant'));
+      return { r: r, s: s, rk: stepRank(s), fl: stepFlow(s), t: /^Montage/.test(s) && hasVal(ov(r, 'Montage geplant')) && mg > 0 ? mg : (Number(ov(r, 'Erfasst am')) || 0) };
+    });
+    items.sort(function (a, b) { return a.rk - b.rk || b.fl - a.fl || (a.s < b.s ? -1 : a.s > b.s ? 1 : 0) || a.t - b.t; });
+    var counts = {}; items.forEach(function (it) { counts[it.s] = (counts[it.s] || 0) + 1; });
     var html = '', grp = null;
-    list.forEach(function (r) {
-      var s = ov(r, 'Nächster Schritt'), rk = stepRank(s);
-      var g = q ? 'Suchergebnis' : (rk <= 1 ? 'Zu erledigen' : 'Warten');
-      if (g !== grp) { html += '<div class="ord-grp">' + g + '</div>'; grp = g; }
-      var amt = hasVal(ov(r, 'Betrag CHF')) ? fmt2.format(Number(ov(r, 'Betrag CHF'))) : '';
+    items.forEach(function (it) {
+      var r = it.r, s = it.s;
+      if (s !== grp) { html += '<div class="ord-grp"><span>' + esc(s || 'Ohne nächsten Schritt') + '</span><span class="cnt">' + counts[s] + '</span></div>'; grp = s; }
+      var amt = hasVal(ov(r, 'Betrag CHF')) ? 'CHF ' + fmt2.format(Number(ov(r, 'Betrag CHF'))) : '';
+      var doc = ov(r, 'Verkaufsart') === 'Direktbestellung' ? 'Kaufvertrag' : 'Offerte';
+      // Geplante Montage (noch nicht montiert): Termin mit Wochentag und Uhrzeit vorne, statt Erfassungsdatum
+      var sub = (hasVal(ov(r, 'Montage geplant')) && !hasVal(ov(r, 'Montiert am')))
+        ? [serialDT(ov(r, 'Montage geplant')), trimmed(ov(r, 'Ort')), doc]
+        : [trimmed(ov(r, 'Ort')), doc, serialText(ov(r, 'Erfasst am'))];
       html += '<button class="ord" data-nr="' + esc(trimmed(ov(r, 'Auftragsnr'))) + '">' +
-        '<span class="l1"><span class="nr">' + esc(ov(r, 'Auftragsnr')) + '</span><span class="nm">' + esc(custName(r) || 'Ohne Namen') + '</span><span class="amt">' + amt + '</span></span>' +
-        '<span class="sub">' + esc([trimmed(ov(r, 'Ort')), ov(r, 'Verkaufsart') === 'Direktbestellung' ? 'Kaufvertrag' : 'Offerte', serialText(ov(r, 'Erfasst am'))].filter(Boolean).join(' · ')) + '</span>' +
-        // Geplante Montage (noch nicht montiert) mit Wochentag und Uhrzeit gleich in der Liste
-        ((hasVal(ov(r, 'Montage geplant')) && !hasVal(ov(r, 'Montiert am'))) ? '<span class="sub"><b>Montage ' + esc(serialDT(ov(r, 'Montage geplant'))) + '</b></span>' : '') +
-        '<span class="tag ' + stepCls(s) + '">' + esc(s || '–') + '</span></button>';
+        '<span class="l1"><span class="who">' + esc(custName(r) || 'Ohne Namen') + '</span><span class="nr">, ' + esc(trimmed(ov(r, 'Auftragsnr'))) + '</span><span class="amt">' + amt + '</span></span>' +
+        '<span class="sub">' + esc(sub.filter(Boolean).join(', ')) + '</span></button>';
     });
     box.innerHTML = html;
   }
