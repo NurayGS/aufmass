@@ -287,9 +287,12 @@ textarea.in { min-height: 64px; resize: vertical; }
   </section>
 
   <!-- 3. Zusammenfassung -->
-  <section class="card">
-    <div class="card-h"><h2><span class="step">3.</span> Zusammenfassung</h2></div>
-    <div class="card-b">
+  <section class="card open" id="sumCard">
+    <button class="toggle" id="sumToggle" aria-expanded="true" aria-controls="sumBody">
+      <span class="grow"><span class="h2" role="heading" aria-level="2"><span class="step">3.</span> Zusammenfassung</span></span>
+      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <div class="card-b" id="sumBody">
       <div class="kv"><span>Produkte</span><span class="v" id="sCount">0</span></div>
       <div class="kv"><span>Gesamtfläche</span><span class="v" id="sArea">0.00 m²</span></div>
       <div class="kv total"><span>Gesamtpreis</span><span class="v" id="sTotal">CHF 0.00</span></div>
@@ -297,9 +300,12 @@ textarea.in { min-height: 64px; resize: vertical; }
   </section>
 
   <!-- 4. Kundenentscheidung -->
-  <section class="card">
-    <div class="card-h"><h2><span class="step">4.</span> Kundenentscheidung</h2></div>
-    <div class="card-b">
+  <section class="card open" id="decCard">
+    <button class="toggle" id="decToggle" aria-expanded="true" aria-controls="decBody">
+      <span class="grow"><span class="h2" role="heading" aria-level="2"><span class="step">4.</span> Kundenentscheidung</span></span>
+      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <div class="card-b" id="decBody">
       <div class="decide">
         <button class="big" id="btnOfferte"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg><span>Offerte<br>erstellen</span><small>Kunde entscheidet später</small></button>
         <button class="big" id="btnDirekt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9.5"/></svg><span>Kaufvertrag<br>erstellen</span><small>Direkt bestellt</small></button>
@@ -339,7 +345,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 6r';
+  var APP_VERSION = '13.11.2026 · 6s';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'farbeText', 'breite', 'hoehe', 'tiefe', 'bem'];
   var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
@@ -427,7 +433,7 @@ textarea.in { min-height: 64px; resize: vertical; }
   // ================= Zustand =================
   var state = null;
   function emptyForm(carry) { return { zimmer: '', zusatz: '', produkt: carry ? carry.produkt : '', farbe: carry ? carry.farbe : '', farbeText: carry ? (carry.farbeText || '') : '', breite: '', hoehe: '', tiefe: '', bem: '' }; }
-  function emptyState() { return { captureId: uid(), startedAt: new Date().toISOString(), custOpen: true, prodOpen: true, editId: null, stash: null, customer: {}, elements: [], form: emptyForm(null), pending: null }; }
+  function emptyState() { return { captureId: uid(), startedAt: new Date().toISOString(), custOpen: true, prodOpen: true, sumOpen: true, decOpen: true, editId: null, stash: null, customer: {}, elements: [], form: emptyForm(null), pending: null }; }
   function save() { store(KEY_STATE, state); }
   function blankForm() { var last = state.elements.length ? state.elements[state.elements.length - 1] : null; return emptyForm(last); }
   function formHasInput(f) { return !!(f.zimmer || trimmed(f.zusatz) || trimmed(f.breite) || trimmed(f.hoehe) || trimmed(f.tiefe) || trimmed(f.bem)); }
@@ -554,13 +560,16 @@ textarea.in { min-height: 64px; resize: vertical; }
         '<span class="txt"><span class="ttl">' + esc(name) + '</span>' + sub + '</span><span class="m2">' + m2 + '</span>' + ICON_CHEV + '</button>';
     }).join('');
     $('elemBadge').textContent = state.elements.length + ' erfasst';
-    // Kachel auf-/zugeklappt (wie Kundendaten); ältere Zwischenstände ohne Angabe gelten als offen
-    var open = state.prodOpen !== false;
-    $('prodCard').classList.toggle('open', open);
-    $('prodBody').hidden = !open;
-    $('prodToggle').setAttribute('aria-expanded', String(open));
   }
-  $('prodToggle').addEventListener('click', function () { state.prodOpen = state.prodOpen === false; renderList(); save(); });
+  // Kacheln 2–4 auf-/zuklappbar (wie Kundendaten); ältere Zwischenstände ohne Angabe gelten als offen
+  var FOLDS = [['prodOpen', 'prodCard', 'prodToggle', 'prodBody'], ['sumOpen', 'sumCard', 'sumToggle', 'sumBody'], ['decOpen', 'decCard', 'decToggle', 'decBody']];
+  function renderFolds() {
+    FOLDS.forEach(function (f) {
+      var open = state[f[0]] !== false;
+      $(f[1]).classList.toggle('open', open); $(f[3]).hidden = !open; $(f[2]).setAttribute('aria-expanded', String(open));
+    });
+  }
+  FOLDS.forEach(function (f) { $(f[2]).addEventListener('click', function () { state[f[0]] = state[f[0]] === false; renderFolds(); save(); }); });
   $('list').addEventListener('click', function (ev) {
     var r = ev.target.closest('.row'); if (!r) return;
     var src = state.elements.filter(function (e) { return e.id === r.dataset.id; })[0]; if (!src) return;
@@ -590,7 +599,7 @@ textarea.in { min-height: 64px; resize: vertical; }
     $('sCount').textContent = t.count; $('sArea').textContent = fmt2.format(t.area) + ' m²'; $('sTotal').textContent = 'CHF ' + fmt2.format(t.total);
     $('srcInfo').textContent = 'Preisraster und Listen: ' + (master.source === 'Excel' ? 'aus Excel, geladen ' + master.loadedAt : 'Standardwerte (noch nicht aus Excel geladen)') + ' · App-Version ' + APP_VERSION;
   }
-  function renderAll(syncForm) { renderCustomer(); renderForm(syncForm); renderList(); renderSummary(); renderAuth(); save(); }
+  function renderAll(syncForm) { renderCustomer(); renderForm(syncForm); renderList(); renderFolds(); renderSummary(); renderAuth(); save(); }
 
   // ================= Dialog & Menü =================
   function dialog(html) { $('dlg').innerHTML = html; $('dlgBg').hidden = false; document.body.classList.add('locked'); var f = $('dlg').querySelector('button, a'); if (f) f.focus(); }
