@@ -429,7 +429,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 7e';
+  var APP_VERSION = '13.11.2026 · 7f';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'farbeText', 'breite', 'hoehe', 'tiefe', 'bem'];
   var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
@@ -1462,7 +1462,9 @@ textarea.in { min-height: 64px; resize: vertical; }
     // Ablauf: Offerte, dann die Auftragsschritte
     var steps = '';
     if (offerte) {
-      if (st === 'Abgelehnt') steps += stepRow(true, false, 'Offerte abgelehnt', trimmed(ov(r, 'Ablehnungsgrund')) || 'Grund fehlt noch', '<button class="chg" data-ordact="offerEdit">ändern</button>');
+      // Abgelehnt = Status «Abgelehnt» oder ein Ablehnungsgrund ist eingetragen (z. B. direkt im Büro-Excel), ausser angenommen
+      var grund = trimmed(ov(r, 'Ablehnungsgrund'));
+      if (st === 'Abgelehnt' || (grund && st !== 'Angenommen')) steps += stepRow(true, false, 'Offerte abgelehnt', grund || 'Grund fehlt noch', '<button class="chg" data-ordact="offerEdit">ändern</button>');
       else if (st === 'Angenommen') steps += stepRow(true, false, 'Offerte angenommen', '', '');
       else steps += stepRow(false, true, 'Offerte', 'Der Kunde hat noch nicht entschieden', '') +
         '<div class="acts-row"><button class="btn primary" data-ordact="accept">Angenommen</button><button class="btn" data-ordact="reject">Abgelehnt</button></div>';
@@ -1704,7 +1706,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       if (!folder) folder = safeName(nr + ' Offerte ' + person);
       var fileName = 'Auftragsbestätigung_' + nr + '_' + person.replace(/ /g, '_') + '.pdf';
       var file = await graph('PUT', '/me/drive/root:/' + encPath(CONFIG.basePath + '/' + CONFIG.ordersFolder + '/' + folder + '/' + fileName) + ':/content', pdf, 'application/pdf');
-      await writeOrderCells(nr, { 'Offertenstatus': 'Angenommen' });
+      await writeOrderCells(nr, { 'Offertenstatus': 'Angenommen', 'Ablehnungsgrund': '' });
       await loadOrders();
       busy = false;
       lastPdf = { blob: pdf, name: fileName };
