@@ -89,7 +89,7 @@ a { color: var(--accent); }
 .open .chev { transform: rotate(180deg); }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-.grid-plz { display: grid; grid-template-columns: 7.5rem 1fr; gap: 10px; }
+.grid-plz { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .field label { font-size: 13.5px; font-weight: 500; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .field label i { font-style: normal; font-weight: 400; opacity: .8; }
@@ -219,7 +219,7 @@ textarea.in { min-height: 64px; resize: vertical; }
   <!-- 1. Kundendaten -->
   <section class="card" id="custCard">
     <button class="toggle" id="custToggle" aria-expanded="true" aria-controls="custBody">
-      <span class="grow"><span class="h2" role="heading" aria-level="2"><span class="step">1.</span> Kundendaten</span><span class="sum" id="custSum">Name, Adresse, Telefon, E-Mail und Datum</span><span class="sum warn-t" id="custWarn" hidden></span></span>
+      <span class="grow"><span class="h2" role="heading" aria-level="2"><span class="step">1.</span> Kundendaten</span><span class="sum" id="custSum" hidden></span><span class="sum warn-t" id="custWarn" hidden></span></span>
       <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
     </button>
     <div class="card-b" id="custBody">
@@ -233,9 +233,7 @@ textarea.in { min-height: 64px; resize: vertical; }
         <div class="field"><label for="ort">Ort</label><input class="in" id="ort" autocomplete="off" autocapitalize="words" enterkeyhint="next"></div>
       </div>
       <div class="field"><label for="telefon">Telefon</label><input class="in" id="telefon" type="tel" inputmode="tel" autocomplete="off" enterkeyhint="next"></div>
-      <div class="field"><label for="email">E-Mail <i>(optional)</i></label><input class="in" id="email" type="email" inputmode="email" autocomplete="off" autocapitalize="off" enterkeyhint="done"></div>
-      <div class="meta"><span>Aufmassdatum <b id="aufmassDatum"></b></span><span>Auftragsnr. <b>wird beim Speichern vergeben</b></span></div>
-    </div>
+      <div class="field"><label for="email">E-Mail <i>(optional)</i></label><input class="in" id="email" type="email" inputmode="email" autocomplete="off" autocapitalize="off" enterkeyhint="done"></div>    </div>
   </section>
 
   <!-- 2. Produkte -->
@@ -332,7 +330,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 6m';
+  var APP_VERSION = '13.11.2026 · 6n';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'farbeText', 'breite', 'hoehe', 'tiefe', 'bem'];
   var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
@@ -438,7 +436,8 @@ textarea.in { min-height: 64px; resize: vertical; }
     CUST_FIELDS.forEach(function (f) { var el = $(f); if (document.activeElement !== el) el.value = c[f] || ''; });
     var name = [c.vorname, c.nachname].filter(Boolean).join(' ');
     var parts = [name, c.ort].filter(function (x) { return trimmed(x); });
-    $('custSum').textContent = parts.length ? parts.join(' · ') : 'Name, Adresse, Telefon, E-Mail und Datum';
+    // Unter der Überschrift erscheint erst etwas, wenn Name oder Ort eingetragen sind (praktisch bei zugeklappter Karte)
+    $('custSum').textContent = parts.join(' · '); $('custSum').hidden = !parts.length;
     var miss = custMissing(), warn = $('custWarn');
     if (miss.length && parts.length) { warn.hidden = false; warn.textContent = 'Fehlt noch: ' + miss.join(', '); } else { warn.hidden = true; }
     $('custCard').classList.toggle('open', state.custOpen);
@@ -1172,8 +1171,6 @@ textarea.in { min-height: 64px; resize: vertical; }
   $('btnDirekt').addEventListener('click', function () { startClose('direkt'); });
 
   // ================= Start =================
-  var today = dateCH(new Date());
-  $('aufmassDatum').textContent = today;
   state = restore(KEY_STATE);
   if (!state || !Array.isArray(state.elements) || !state.form) state = emptyState();
   fillSelects();
