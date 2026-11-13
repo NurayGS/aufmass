@@ -129,17 +129,6 @@ textarea.in { min-height: 64px; resize: vertical; }
 .pform.editing { background: var(--warn-soft); padding: 12px; margin: 0 -4px; }
 .pform-h b { font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
 .editing .pform-h b { color: var(--warn); }
-.area { border-radius: 14px; padding: 12px 14px; background: var(--surface-2); display: flex; flex-direction: column; gap: 4px; }
-.area-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-.area-top span { font-weight: 600; }
-.area-top b { font-family: var(--font-num); font-size: 34px; line-height: 1; font-weight: 700; color: var(--fg); font-variant-numeric: tabular-nums; }
-.area-top b small { font-size: 18px; }
-.tape { height: 9px; border-radius: 3px; opacity: .5;
-  background: repeating-linear-gradient(90deg, var(--muted) 0 1px, transparent 1px 10px), repeating-linear-gradient(90deg, var(--muted) 0 1px, transparent 1px 50px);
-  background-size: 100% 5px, 100% 9px; background-repeat: no-repeat; background-position: bottom, bottom; }
-.area .f { font-size: 12.5px; color: var(--muted); }
-.area .p { font-size: 14px; display: flex; justify-content: space-between; gap: 10px; }
-.area .p b { font-family: var(--font-num); font-size: 18px; }
 .acts-row { display: flex; gap: 8px; }
 .btn { flex: 1; min-height: 52px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface-2); cursor: pointer; font-weight: 600; font-size: 16px; padding: 0 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; color: var(--fg); }
 .btn svg { width: 20px; height: 20px; }
@@ -350,12 +339,6 @@ textarea.in { min-height: 64px; resize: vertical; }
           <button class="btn primary" id="fAdd" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span id="fAddLbl">Hinzufügen</span></button>
         </div>
         <div class="need" id="fNeed" hidden></div>
-        <div class="area" aria-live="polite">
-          <div class="area-top"><span>Berechnete Fläche</span><b id="fArea">–</b></div>
-          <div class="tape" aria-hidden="true"></div>
-          <div class="f" id="fFormula">Breite × Höhe ÷ 10'000, ohne Aufrundung</div>
-          <div class="p"><span id="fPriceLbl">Preis</span><b id="fPrice">–</b></div>
-        </div>
       </div>
       <div class="list" id="list"></div>
     </div>
@@ -450,7 +433,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 7j';
+  var APP_VERSION = '13.11.2026 · 7k';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   // «lauf» (flache Laufschiene: 'Ja' / 'Nein' / '') hat kein Eingabefeld, sondern den Ja/Nein-Schalter
   // Tiefe wird seit 7h nicht mehr erfasst (alte Aufträge behalten ihre Tiefe im Excel)
@@ -621,14 +604,7 @@ textarea.in { min-height: 64px; resize: vertical; }
     $('formHead').hidden = !editing;
     $('formTitle').textContent = editing ? 'Bearbeiten: ' + (bereich(f) || 'Produkt') : '';
     $('zusatzWrap').hidden = f.zimmer !== 'Sonstiges';
-    $('fArea').innerHTML = c.area != null ? fmt2.format(c.area) + ' <small>m²</small>' : '–';
-    $('fFormula').textContent = c.area != null
-      ? fmt2.format(c.b.val).replace(/\.00$/, '') + ' × ' + fmt2.format(c.h.val).replace(/\.00$/, '') + ' cm ÷ 10\'000, ohne Aufrundung'
-      : 'Breite × Höhe ÷ 10\'000, ohne Aufrundung';
     $('farbeTextWrap').hidden = f.farbe !== 'Sonstige';
-    $('fPriceLbl').textContent = c.r ? (c.r.art + ', Rasterfeld ' + c.r.feld + (c.r.outside ? ' · ausserhalb Raster, bitte prüfen' : '')) : 'Preis';
-    $('fPriceLbl').style.color = c.r && c.r.outside ? 'var(--warn)' : '';
-    $('fPrice').textContent = c.price != null ? 'CHF ' + fmt2.format(c.price) : (c.r && c.r.error ? c.r.error : '–');
     var msgs = [];
     function mark(id, bad) { $(id).classList.toggle('err', !!bad); }
     var bBad = touched.breite && !c.b.empty && !c.b.ok, hBad = touched.hoehe && !c.h.empty && !c.h.ok;
