@@ -122,7 +122,7 @@ textarea.in { min-height: 64px; resize: vertical; }
 .lauf > span { font-size: 15px; font-weight: 500; }
 .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; width: 156px; flex: none; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-ctl); }
 .seg button { min-height: 40px; border: 0; border-radius: 9px; background: transparent; font: inherit; font-size: 16px; font-weight: 600; color: var(--muted); cursor: pointer; }
-.seg button[aria-pressed="true"] { background: var(--sel); color: var(--sel-fg); }
+.seg button[aria-pressed="true"] { background: var(--primary); color: var(--primary-fg); }
 .meta { font-size: 13.5px; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .meta b { color: var(--fg); font-weight: 600; }
 .pform { display: flex; flex-direction: column; gap: 12px; border-radius: 16px; scroll-margin-top: calc(80px + env(safe-area-inset-top, 0px)); }
@@ -450,7 +450,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 7i';
+  var APP_VERSION = '13.11.2026 · 7j';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   // «lauf» (flache Laufschiene: 'Ja' / 'Nein' / '') hat kein Eingabefeld, sondern den Ja/Nein-Schalter
   // Tiefe wird seit 7h nicht mehr erfasst (alte Aufträge behalten ihre Tiefe im Excel)
