@@ -241,36 +241,38 @@ textarea.in { min-height: 64px; resize: vertical; }
     <div class="card-h"><h2><span class="step">2.</span> Produkte</h2><span class="badge" id="elemBadge">0 erfasst</span></div>
     <div class="card-b">
       <div class="pform" id="pform">
-        <div class="pform-h"><b id="formTitle">Neues Produkt</b></div>
+        <!-- Überschrift nur beim Bearbeiten eines bereits erfassten Produkts -->
+        <div class="pform-h" id="formHead" hidden><b id="formTitle"></b></div>
         <div class="grid2">
-          <div class="field"><label for="fZimmer">Zimmer / Bereich</label><select class="in" id="fZimmer"></select></div>
-          <div class="field"><label for="fZusatz" id="fZusatzLbl">Zusatzbezeichnung</label><input class="in" id="fZusatz" placeholder="z. B. Büro 2" autocomplete="off" enterkeyhint="next"></div>
+          <div class="field"><label for="fZimmer">Bereich</label><select class="in" id="fZimmer"></select></div>
+          <div class="field"><label for="fProdukt">Produkt</label><select class="in" id="fProdukt"></select></div>
         </div>
+        <!-- Nur bei Bereich «Sonstiges»: eintippen, was es ist -->
+        <div class="field" id="zusatzWrap" hidden><label for="fZusatz">Bezeichnung <i>(nötig)</i></label><input class="in" id="fZusatz" placeholder="z. B. Wintergarten" autocomplete="off" enterkeyhint="next"></div>
         <div class="hint" id="hZusatz"></div>
         <div class="grid2">
-          <div class="field"><label for="fProdukt">Produkt</label><select class="in" id="fProdukt"></select></div>
           <div class="field"><label for="fFarbe">Farbe</label><select class="in" id="fFarbe"></select></div>
+          <div class="field"><label for="fBreite">Breite</label><div class="unit"><input class="in" id="fBreite" inputmode="decimal" autocomplete="off" placeholder="0"><span>cm</span></div></div>
         </div>
         <div class="field" id="farbeTextWrap" hidden><label for="fFarbeText">Farbwunsch des Kunden</label><input class="in" id="fFarbeText" placeholder="z. B. RAL 7016, Braun, Bronze" autocomplete="off" enterkeyhint="next"></div>
-        <div class="grid3">
-          <div class="field"><label for="fBreite">Breite</label><div class="unit"><input class="in" id="fBreite" inputmode="decimal" autocomplete="off" placeholder="0"><span>cm</span></div></div>
+        <div class="grid2">
           <div class="field"><label for="fHoehe">Höhe</label><div class="unit"><input class="in" id="fHoehe" inputmode="decimal" autocomplete="off" placeholder="0"><span>cm</span></div></div>
           <div class="field"><label for="fTiefe">Tiefe <i>(opt.)</i></label><div class="unit"><input class="in" id="fTiefe" inputmode="decimal" autocomplete="off" placeholder="0"><span>cm</span></div></div>
         </div>
         <div class="hint" id="hMasse"></div>
         <div class="field"><label for="fBem">Bemerkungen <i>(optional)</i></label><textarea class="in" id="fBem" placeholder="z. B. Fenstergriff beachten"></textarea></div>
+        <div class="acts-row">
+          <button class="btn danger" id="fDelete" hidden>Löschen</button>
+          <button class="btn ghost" id="fCancel" hidden>Abbrechen</button>
+          <button class="btn primary" id="fAdd" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span id="fAddLbl">Hinzufügen</span></button>
+        </div>
+        <div class="need" id="fNeed" hidden></div>
         <div class="area" aria-live="polite">
           <div class="area-top"><span>Berechnete Fläche</span><b id="fArea">–</b></div>
           <div class="tape" aria-hidden="true"></div>
           <div class="f" id="fFormula">Breite × Höhe ÷ 10'000, ohne Aufrundung</div>
           <div class="p"><span id="fPriceLbl">Preis</span><b id="fPrice">–</b></div>
         </div>
-        <div class="acts-row">
-          <button class="btn danger" id="fDelete" hidden>Löschen</button>
-          <button class="btn ghost" id="fCancel" hidden>Abbrechen</button>
-          <button class="btn primary" id="fAdd" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span id="fAddLbl">Hinzufügen</span></button>
-        </div>
-        <div class="need" id="fNeed"></div>
       </div>
       <div class="list" id="list"></div>
     </div>
@@ -330,7 +332,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 6n';
+  var APP_VERSION = '13.11.2026 · 6o';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'farbeText', 'breite', 'hoehe', 'tiefe', 'bem'];
   var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
@@ -393,7 +395,7 @@ textarea.in { min-height: 64px; resize: vertical; }
   }
   function missing(e) {
     var c = calc(e), t = parseCm(e.tiefe), out = [];
-    if (!e.zimmer) out.push('Zimmer');
+    if (!e.zimmer) out.push('Bereich');
     if (e.zimmer === 'Sonstiges' && !trimmed(e.zusatz)) out.push('Bezeichnung');
     if (!e.produkt) out.push('Produkt');
     if (!e.farbe) out.push('Farbe');
@@ -448,7 +450,7 @@ textarea.in { min-height: 64px; resize: vertical; }
 
   // Eingabetaste (↵) springt ins nächste Feld. Bereits ausgefüllte Auswahllisten werden übersprungen.
   var NEXT_ORDER = ['vorname', 'nachname', 'strasse', 'plz', 'ort', 'telefon', 'email', null,
-    'fZimmer', 'fZusatz', 'fProdukt', 'fFarbe', 'fFarbeText', 'fBreite', 'fHoehe', 'fTiefe', null];
+    'fZimmer', 'fProdukt', 'fZusatz', 'fFarbe', 'fBreite', 'fFarbeText', 'fHoehe', 'fTiefe', null];
   document.addEventListener('keydown', function (ev) {
     if (ev.key !== 'Enter' && ev.keyCode !== 13) return;
     var el = ev.target;
@@ -475,8 +477,9 @@ textarea.in { min-height: 64px; resize: vertical; }
     var f = state.form, c = calc(f), editing = !!state.editId;
     if (syncInputs) FIELDS.forEach(function (k) { $(INPUT_ID[k]).value = f[k] || ''; });
     $('pform').classList.toggle('editing', editing);
-    $('formTitle').textContent = editing ? 'Bearbeiten: ' + (bereich(f) || 'Produkt') : (state.elements.length ? 'Nächstes Produkt' : 'Neues Produkt');
-    $('fZusatzLbl').innerHTML = f.zimmer === 'Sonstiges' ? 'Bezeichnung <i>(nötig)</i>' : 'Zusatzbezeichnung';
+    $('formHead').hidden = !editing;
+    $('formTitle').textContent = editing ? 'Bearbeiten: ' + (bereich(f) || 'Produkt') : '';
+    $('zusatzWrap').hidden = f.zimmer !== 'Sonstiges';
     $('fArea').innerHTML = c.area != null ? fmt2.format(c.area) + ' <small>m²</small>' : '–';
     $('fFormula').textContent = c.area != null
       ? fmt2.format(c.b.val).replace(/\.00$/, '') + ' × ' + fmt2.format(c.h.val).replace(/\.00$/, '') + ' cm ÷ 10\'000, ohne Aufrundung'
@@ -500,13 +503,20 @@ textarea.in { min-height: 64px; resize: vertical; }
     $('fAdd').disabled = miss.length > 0;
     $('fAddLbl').textContent = editing ? 'Speichern' : 'Hinzufügen';
     $('fAdd').querySelector('svg').style.display = editing ? 'none' : '';
-    $('fNeed').textContent = miss.length && (editing || formHasInput(f)) ? 'Noch nötig: ' + miss.join(', ') : (miss.length ? 'Fülle Zimmer, Produkt, Farbe, Breite und Höhe aus.' : '');
+    // Nur wenn schon etwas eingetragen ist und noch etwas fehlt: kurz sagen, was (darum ist «Hinzufügen» grau)
+    var needTxt = miss.length && (editing || formHasInput(f)) ? 'Noch nötig: ' + miss.join(', ') : '';
+    $('fNeed').textContent = needTxt; $('fNeed').hidden = !needTxt;
     $('fDelete').hidden = !editing; $('fCancel').hidden = !editing;
     if (!editing) { $('fDelete').textContent = 'Löschen'; $('fDelete').dataset.armed = ''; }
   }
   FIELDS.forEach(function (k) {
     var el = $(INPUT_ID[k]);
-    el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', function () { state.form[k] = el.value; if (k === 'zimmer') touched.zusatz = true; renderForm(false); save(); });
+    el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', function () {
+      state.form[k] = el.value;
+      // Bezeichnung gibt es nur bei «Sonstiges»; bei einem anderen Bereich wird sie geleert
+      if (k === 'zimmer') { if (el.value !== 'Sonstiges') { state.form.zusatz = ''; $('fZusatz').value = ''; touched.zusatz = false; } }
+      renderForm(false); save();
+    });
     el.addEventListener('blur', function () { touched[k] = true; renderForm(false); });
   });
   function resetForm() { touched = {}; if (state.stash) { state.form = state.stash; state.stash = null; } else { state.form = blankForm(); } state.editId = null; }
@@ -598,9 +608,9 @@ textarea.in { min-height: 64px; resize: vertical; }
     try {
       if (!state.elements.length) {
         state.elements = [
-          { id: 'm1', zimmer: 'Schlafzimmer', zusatz: 'links', produkt: master.produkte[0].name, farbe: master.farben[0], breite: '120', hoehe: '140', tiefe: '5', bem: '' },
+          { id: 'm1', zimmer: 'Schlafzimmer', zusatz: '', produkt: master.produkte[0].name, farbe: master.farben[0], breite: '120', hoehe: '140', tiefe: '5', bem: '' },
           { id: 'm2', zimmer: 'Küche', zusatz: '', produkt: master.produkte[0].name, farbe: master.farben[0], breite: '80', hoehe: '120', tiefe: '', bem: 'Fenstergriff beachten' },
-          { id: 'm3', zimmer: 'Büro', zusatz: 'Büro 2', produkt: master.produkte[0].name, farbe: master.farben[0], breite: '73', hoehe: '118', tiefe: '', bem: '' }
+          { id: 'm3', zimmer: 'Büro', zusatz: '', produkt: master.produkte[0].name, farbe: master.farben[0], breite: '73', hoehe: '118', tiefe: '', bem: '' }
         ];
         if (!trimmed(cust.nachname)) cust = { vorname: 'Anna', nachname: 'Muster', strasse: 'Musterweg 12', plz: '8000', ort: 'Zürich', telefon: '079 123 45 67' };
       }
