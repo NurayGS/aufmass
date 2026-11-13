@@ -136,8 +136,6 @@ textarea.in { min-height: 64px; resize: vertical; }
 .btn.primary:disabled { background: var(--line); border-color: var(--line); color: var(--muted); cursor: not-allowed; }
 .btn.danger { color: var(--danger); background: var(--danger-soft); border-color: transparent; flex: none; }
 .btn.ghost { flex: none; }
-.need { font-size: 13px; color: var(--muted); text-align: center; }
-.need:empty { display: none; }
 .list { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
 .list:empty { display: none; }
 .row { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; cursor: pointer; background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; padding: 12px; min-height: 60px; }
@@ -338,7 +336,6 @@ textarea.in { min-height: 64px; resize: vertical; }
           <button class="btn ghost" id="fCancel" hidden>Abbrechen</button>
           <button class="btn primary" id="fAdd" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span id="fAddLbl">Hinzufügen</span></button>
         </div>
-        <div class="need" id="fNeed" hidden></div>
       </div>
       <div class="list" id="list"></div>
     </div>
@@ -433,7 +430,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 7k';
+  var APP_VERSION = '13.11.2026 · 7l';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   // «lauf» (flache Laufschiene: 'Ja' / 'Nein' / '') hat kein Eingabefeld, sondern den Ja/Nein-Schalter
   // Tiefe wird seit 7h nicht mehr erfasst (alte Aufträge behalten ihre Tiefe im Excel)
@@ -619,9 +616,6 @@ textarea.in { min-height: 64px; resize: vertical; }
     $('fAdd').disabled = miss.length > 0;
     $('fAddLbl').textContent = editing ? 'Speichern' : 'Hinzufügen';
     $('fAdd').querySelector('svg').style.display = editing ? 'none' : '';
-    // Nur wenn schon etwas eingetragen ist und noch etwas fehlt: kurz sagen, was (darum ist «Hinzufügen» grau)
-    var needTxt = miss.length && (editing || formHasInput(f)) ? 'Noch nötig: ' + miss.join(', ') : '';
-    $('fNeed').textContent = needTxt; $('fNeed').hidden = !needTxt;
     $('fDelete').hidden = !editing; $('fCancel').hidden = !editing;
     if (!editing) { $('fDelete').textContent = 'Löschen'; $('fDelete').dataset.armed = ''; }
   }
