@@ -345,7 +345,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 6w';
+  var APP_VERSION = '13.11.2026 · 6x';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'farbeText', 'breite', 'hoehe', 'tiefe', 'bem'];
   var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
@@ -848,9 +848,9 @@ textarea.in { min-height: 64px; resize: vertical; }
       .filter(function (x) { return trimmed(x); })
       .forEach(function (line, i) { doc.text(line, L, 54 + i * 5.2); });
 
-    // Rechts: Datum und (nur Offerte) Gültigkeit; die Nummer steht im Titel
-    var info = [['Datum', o.dateText]];
-    if (!isK) info.push(['Angebot gültig bis', o.validUntil]);
+    // Rechts nur bei der Offerte: Datum und Gültigkeit. Beim Kaufvertrag steht das Datum
+    // im Einleitungssatz und bei der Unterschrift. Die Nummer steht im Titel.
+    var info = isK ? [] : [['Datum', o.dateText], ['Angebot gültig bis', o.validUntil]];
     info.forEach(function (row, i) {
       txt(GREY, F, 'normal', 9); doc.text(row[0], 132, 54 + i * 5.2);
       txt(INK, F, 'normal', 9.5); doc.text(row[1], R, 54 + i * 5.2, { align: 'right' });
