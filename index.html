@@ -237,7 +237,10 @@ textarea.in { min-height: 64px; resize: vertical; }
 .step-row .lbl { flex: 1; min-width: 0; font-size: 15.5px; }
 .step-row .lbl small { display: block; color: var(--muted); font-size: 13px; }
 .step-row .btn { flex: none; min-height: 40px; font-size: 14.5px; padding: 0 12px; }
-.step-row .chg { border: 0; background: none; color: var(--accent); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; padding: 6px; }
+.step-row .chg, .d-hrow .chg { border: 0; background: none; color: var(--accent); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; padding: 6px; }
+.d-hrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.kv .v.neg { color: var(--danger); }
+.unit.chf .in { padding-right: 50px; }
 .step-row.next .lbl { font-weight: 600; }
 .d-h { margin: 0; font-family: var(--font-num); font-size: 19px; font-weight: 600; }
 .acts-row .btn { min-height: 48px; }
@@ -426,7 +429,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 7d';
+  var APP_VERSION = '13.11.2026 · 7e';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'farbeText', 'breite', 'hoehe', 'tiefe', 'bem'];
   var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
@@ -1487,6 +1490,20 @@ textarea.in { min-height: 64px; resize: vertical; }
       }
     }
     html += '<section class="card"><div class="card-b"><h3 class="d-h">Ablauf</h3><div>' + steps + '</div></div></section>';
+
+    // Kosten (nur Aufträge): Einkauf und Lieferung trägst du selbst ein, der Gewinn rechnet sich daraus
+    if (!offerte || st === 'Angenommen') {
+      var kE = ov(r, 'Kosten Einkauf CHF'), kL = ov(r, 'Kosten Lieferung CHF'), hatKosten = hasVal(kE) || hasVal(kL);
+      var kosten = '<p class="fine">Noch keine Kosten eingetragen.</p><button class="btn" data-ordact="cost">Kosten eintragen</button>';
+      if (hatKosten) {
+        var gewinn = round((Number(ov(r, 'Betrag CHF')) || 0) - (Number(kE) || 0) - (Number(kL) || 0), 2);
+        kosten = '<div class="kv"><span>Einkauf</span><span class="v">' + (hasVal(kE) ? 'CHF ' + fmt2.format(Number(kE)) : '–') + '</span></div>' +
+          '<div class="kv"><span>Lieferung</span><span class="v">' + (hasVal(kL) ? 'CHF ' + fmt2.format(Number(kL)) : '–') + '</span></div>' +
+          '<div class="kv total"><span>Gewinn</span><span class="v' + (gewinn < 0 ? ' neg' : '') + '">CHF ' + fmt2.format(gewinn) + '</span></div>';
+      }
+      html += '<section class="card"><div class="card-b"><div class="d-hrow"><h3 class="d-h">Kosten</h3>' +
+        (hatKosten ? '<button class="chg" data-ordact="cost">ändern</button>' : '') + '</div>' + kosten + '</div></section>';
+    }
     box.innerHTML = html;
   }
   function openOrder(nr) { ord.sel = nr; $('ordListView').hidden = true; $('ordDetail').hidden = false; renderDetail(); window.scrollTo(0, 0); }
@@ -1618,6 +1635,32 @@ textarea.in { min-height: 64px; resize: vertical; }
     };
     dialogActions.dateClr = function () { if (withTime && CONFIG.calendar) setMontage(nr, ''); else setFields(nr, mapOf(field, '')); };
   }
+  // Kosten eines Auftrags in CHF; leeres Feld = keine Angabe. Erlaubt: 245.50, 245,50, 1'200
+  function parseChf(raw) {
+    var s = trimmed(raw).replace(/[\s'’]/g, '').replace(',', '.');
+    if (s === '') return { ok: true, val: '' };
+    if (!/^\d+(\.\d{1,2})?$/.test(s)) return { ok: false };
+    return { ok: true, val: round(parseFloat(s), 2) };
+  }
+  function costDialog(nr) {
+    var r = findOrder(nr); if (!r) return;
+    function cur(f) { var v = ov(r, f); return hasVal(v) ? String(round(Number(v), 2)) : ''; }
+    function feld(id, label, f) {
+      return '<div class="field"><label for="' + id + '">' + label + '</label><div class="unit chf"><input class="in" id="' + id + '" inputmode="decimal" autocomplete="off" placeholder="0.00" value="' +
+        esc(cur(f)) + '"><span>CHF</span></div></div>';
+    }
+    dialog('<h3>Kosten</h3><p>Auftrag ' + esc(nr) + ' · ' + esc(custName(r) || 'Ohne Namen') + ' · Betrag CHF ' + fmt2.format(Number(ov(r, 'Betrag CHF')) || 0) + '</p>' +
+      '<div class="grid2">' + feld('kE', 'Einkauf', 'Kosten Einkauf CHF') + feld('kL', 'Lieferung', 'Kosten Lieferung CHF') + '</div>' +
+      '<p>Lieferung für mehrere Aufträge: ganzen Betrag bei einem Auftrag eintragen, bei den anderen 0 – oder selbst aufteilen.</p>' +
+      '<div class="hint" id="kHint"></div>' +
+      '<div class="acts"><button class="btn primary" data-act="costGo">Speichern</button><button class="btn" data-act="close">Abbrechen</button></div>');
+    dialogActions.costGo = function () {
+      var e = parseChf($('kE').value), l = parseChf($('kL').value);
+      $('kE').classList.toggle('err', !e.ok); $('kL').classList.toggle('err', !l.ok);
+      if (!e.ok || !l.ok) { $('kHint').textContent = 'Bitte nur Beträge eingeben, z. B. 245.50'; return; }
+      setFields(nr, { 'Kosten Einkauf CHF': e.val, 'Kosten Lieferung CHF': l.val });
+    };
+  }
   function rejectDialog(nr, editing) {
     var r = findOrder(nr), cur = r ? trimmed(ov(r, 'Ablehnungsgrund')) : '';
     dialog('<h3>' + (editing ? 'Ablehnung ändern' : 'Offerte abgelehnt') + '</h3><p>Warum hat der Kunde abgelehnt?</p>' +
@@ -1700,6 +1743,7 @@ textarea.in { min-height: 64px; resize: vertical; }
     else if (act === 'accept') acceptDialog(nr);
     else if (act === 'reject') rejectDialog(nr, false);
     else if (act === 'offerEdit') rejectDialog(nr, true);
+    else if (act === 'cost') costDialog(nr);
   });
 
   // ================= Start =================
