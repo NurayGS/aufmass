@@ -260,6 +260,25 @@ textarea.in { min-height: 64px; resize: vertical; }
 .step-row.next .lbl { font-weight: 600; }
 .d-h { margin: 0; font-size: 15px; font-weight: 600; }
 .acts-row .btn { min-height: 48px; }
+/* Garantiefälle */
+.g-acts { padding: 0 0 6px 34px; }
+.g-link { align-self: flex-start; border: 0; background: none; color: var(--accent); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; padding: 6px 0 2px 34px; }
+.step-row .lbl.muted { color: var(--muted); }
+.g-sec { display: flex; flex-direction: column; gap: 6px; }
+.g-lbl { font-size: 13.5px; font-weight: 500; color: var(--muted); }
+.g-lbl i { font-style: normal; font-weight: 400; opacity: .8; }
+.g-opts { display: flex; flex-direction: column; gap: 6px; }
+.g-opt { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border: 1px solid var(--line); border-radius: var(--r-ctl); background: var(--surface-2); font-size: 15px; cursor: pointer; }
+.g-opt input { width: 18px; height: 18px; margin: 0; flex: none; accent-color: var(--primary); }
+.g-opt:has(input:checked) { border-color: var(--primary); }
+.g-opts.err .g-opt { border-color: var(--danger); }
+.g-fotos { display: flex; flex-wrap: wrap; gap: 8px; }
+.g-foto, .g-add { position: relative; width: 64px; height: 64px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); padding: 0; cursor: pointer; overflow: hidden; color: var(--muted); display: grid; place-items: center; }
+.g-add { border-style: dashed; }
+.g-add svg { width: 24px; height: 24px; }
+.g-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.g-foto span { position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; border-radius: 50%; background: rgba(0, 0, 0, .6); color: #fff; font-size: 14px; line-height: 20px; text-align: center; }
+.vh { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -437,14 +456,14 @@ textarea.in { min-height: 64px; resize: vertical; }
       { name: 'Plissee zweiflügelig', beschreibung: 'Mit Magnetverschluss', lauf: true }, { name: 'Plissee zweiflügelig, Mitte schliessend', beschreibung: 'Mit Magnetverschluss', lauf: true }],
     farben: ['Weiss', 'Anthrazit', 'Sonstige'],
     gewebe: ['Normal', 'Pollenschutz'],
-    firma: { firma: 'FlyGuard Arifi', strasse: 'Rebrainstrasse 17', plzOrt: '8106 Adlikon b. Regensdorf', telefon: '076 419 40 47', email: 'info@flyguard.ch', web: '', uid: 'CHE-225.710.567', gueltigTage: 30, zahlungsfrist: 30 },
+    firma: { firma: 'FlyGuard Arifi', strasse: 'Rebrainstrasse 17', plzOrt: '8106 Adlikon b. Regensdorf', telefon: '076 419 40 47', email: 'info@flyguard.ch', web: '', uid: 'CHE-225.710.567', gueltigTage: 30, zahlungsfrist: 30, garantieJahre: 2 },
     regeln: { fenster: { abHoehe: 0, aufB: 20, aufH: 15, rund: 5 }, tuer: { abHoehe: 200, aufB: 37.5, aufH: 15, rund: 5 } },
     raster: {
       fenster: makeGrid(range(70, 150), range(100, 190), function (w, h) { return 200 + 20 * (w - 70) / 10 + 15 * (h - 100) / 10; }),
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 7r';
+  var APP_VERSION = '13.11.2026 · 7s';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   // «lauf» (flache Laufschiene: 'Ja' / 'Nein' / '') hat kein Eingabefeld, sondern den Ja/Nein-Schalter
   // Tiefe wird seit 7h nicht mehr erfasst (alte Aufträge behalten ihre Tiefe im Excel)
@@ -903,6 +922,7 @@ textarea.in { min-height: 64px; resize: vertical; }
         Object.keys(KEYS).forEach(function (k) { if (KEYS[k] in map) fa[k] = map[KEYS[k]]; });
         if (Number(map['offerte gültig tage']) > 0) fa.gueltigTage = Number(map['offerte gültig tage']);
         if (Number(map['zahlungsfrist tage']) > 0) fa.zahlungsfrist = Number(map['zahlungsfrist tage']);
+        if (Number(map['garantie jahre']) > 0) fa.garantieJahre = Number(map['garantie jahre']);
       } catch (e) { /* Einstellungen fehlen: Standardwerte */ }
       master = { produkte: produkte, farben: farben, gewebe: gewebe, zimmer: zimmer, regeln: regeln, raster: raster, firma: fa, source: 'Excel', loadedAt: new Date().toLocaleString('de-CH', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) };
       store(KEY_MASTER, master); fillSelects(); renderAll(true);
@@ -1319,9 +1339,16 @@ textarea.in { min-height: 64px; resize: vertical; }
       });
       await addRows('tblPositionen', posRows);
       await addRows('tblAuftraege', [orderRow]);
+      // Kommt die Erfassung aus einem Garantiefall ausserhalb der Garantie: neue Auftragsnr beim Fall eintragen (schliesst ihn ab)
+      var gNote = '';
+      if (state.garantieFall) {
+        try { await writeRowCells('tblGarantie', 'Fall-Nr', state.garantieFall, { 'Neue Offerte': p.orderNo }); }
+        catch (e) { gNote = ' Garantiefall ' + state.garantieFall + ' konnte nicht verknüpft werden (' + ((e && e.message) || e) + '). Bitte im Büro-Excel bei «Neue Offerte» ' + p.orderNo + ' eintragen.'; }
+      }
       lastPdf = { blob: pdf, name: fileName };
       busy = false;
-      finished({ orderNo: p.orderNo, kind: kind, fileUrl: p.fileUrl, folderUrl: p.folderUrl, name: [c.vorname, c.nachname].filter(Boolean).join(' '), phone: trimmed(c.telefon), totals: tt });
+      finished({ orderNo: p.orderNo, kind: kind, fileUrl: p.fileUrl, folderUrl: p.folderUrl, name: [c.vorname, c.nachname].filter(Boolean).join(' '), phone: trimmed(c.telefon), totals: tt,
+        note: gNote ? 'Das PDF liegt in OneDrive, der Auftrag steht im Büro-Excel.' + gNote : '' });
     } catch (e) {
       busy = false;
       if (e && e.errorCode === 'interaction_in_progress') return;
@@ -1385,8 +1412,9 @@ textarea.in { min-height: 64px; resize: vertical; }
   // ================= Reiter «Aufträge» =================
   // Liest Aufträge und Positionen aus dem Büro-Excel. Die Liste zeigt offene Aufträge (dringendste zuerst),
   // erledigte nur über die Suche. Schritte werden per Knopf mit Datum direkt ins Excel geschrieben.
-  var ord = { loaded: false, loading: false, loadedAt: 0, H: [], rows: [], PH: [], pos: [], gruende: [], err: '', sel: null, q: '' };
-  var STEP_RED = /Mahnung senden|Betreibung|abgelaufen/, STEP_ORA = /bestellen|vereinbaren|Rechnung erstellen|nachfassen|eintragen|durchführen/;
+  var ord = { loaded: false, loading: false, loadedAt: 0, H: [], rows: [], PH: [], pos: [], gruende: [], err: '', sel: null, q: '',
+    GH: [], gar: [], hasG: false, schaeden: [] };
+  var STEP_RED = /Mahnung senden|Betreibung|abgelaufen/, STEP_ORA = /bestellen|vereinbaren|Rechnung erstellen|Offerte erstellen|nachfassen|eintragen|durchführen/;
   var ICON_OK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   function ov(r, name) { var i = ord.H.indexOf(name); return i < 0 ? '' : r[i]; }
   function pv(r, name) { var i = ord.PH.indexOf(name); return i < 0 ? '' : r[i]; }
@@ -1397,7 +1425,10 @@ textarea.in { min-height: 64px; resize: vertical; }
   // Position im Ablauf (Texte wie in der Excel-Formel «Nächster Schritt»); unbekannt = -1
   var STEP_FLOW = [/^Warten auf Entscheid/, /^Offerte nachfassen/, /^Offerte abgelaufen/, /^Ablehnungsgrund/, /^Beim Lieferanten/, /^Warten auf Lieferung/,
     /^Montagetermin/, /^Montage geplant/, /^Montage durchf/, /^Rechnung erstellen/, /^Warten auf Zahlung/, /^1\. Mahnung/, /^2\. Mahnung/, /^3\. Mahnung/,
-    /^Betreibung/, /^Erledigt – abgelehnt/, /^Erledigt – bezahlt/];
+    /^Betreibung/, /^Erledigt – abgelehnt/, /^Erledigt – bezahlt/,
+    // Garantiefälle (Blatt «Garantie»): stehen bei gleicher Dringlichkeit vor den Aufträgen
+    /^Garantie – Montagedatum/, /^Ausserhalb Garantie/, /^Garantie – Ersatz bestellen/, /^Garantie – warten/, /^Garantie – Termin vereinbaren/,
+    /^Garantie – Termin geplant/, /^Garantie – Montage durchf/, /^Erledigt – (Garantie|neue Offerte|ohne Offerte)/];
   function stepFlow(s) { s = String(s || ''); for (var i = 0; i < STEP_FLOW.length; i++) if (STEP_FLOW[i].test(s)) return i; return -1; }
   function fromSerial(v) {
     if (!hasVal(v)) return null;
@@ -1421,6 +1452,27 @@ textarea.in { min-height: 64px; resize: vertical; }
   function isoOf(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   function custName(r) { return [ov(r, 'Vorname'), ov(r, 'Nachname')].map(trimmed).filter(Boolean).join(' '); }
   function findOrder(nr) { return ord.rows.filter(function (r) { return trimmed(ov(r, 'Auftragsnr')) === nr; })[0]; }
+  // Garantiefälle (Tabelle tblGarantie): ein Produkt pro Fall, Fall-Nr = Auftragsnr-G1, -G2 …
+  function gv(r, name) { var i = ord.GH.indexOf(name); return i < 0 ? '' : r[i]; }
+  function findCase(fall) { return ord.gar.filter(function (g) { return trimmed(gv(g, 'Fall-Nr')) === fall; })[0]; }
+  function casesOf(nr) {
+    return ord.gar.filter(function (g) { return trimmed(gv(g, 'Auftragsnr')) === nr; })
+      .sort(function (a, b) { return (Number(String(gv(a, 'Fall-Nr')).split('-G')[1]) || 0) - (Number(String(gv(b, 'Fall-Nr')).split('-G')[1]) || 0); });
+  }
+  function caseClosed(g) { return /^Erledigt/.test(trimmed(gv(g, 'Nächster Schritt'))); }
+  function caseName(g) { return [gv(g, 'Vorname'), gv(g, 'Nachname')].map(trimmed).filter(Boolean).join(' '); }
+  function posOf(nr) {
+    return ord.pos.filter(function (p) { return trimmed(pv(p, 'Auftragsnr')) === nr; })
+      .sort(function (a, b) { return (Number(pv(a, 'Pos')) || 0) - (Number(pv(b, 'Pos')) || 0); });
+  }
+  // Garantie läuft ab «Montiert am» (Jahre aus den Einstellungen, Standard 2); 29. Februar → 28. Februar
+  function garantieBis(montiert) {
+    var d = fromSerial(montiert); if (!d) return null;
+    var y = d.getFullYear() + (Number(firma().garantieJahre) || 2), x = new Date(y, d.getMonth(), d.getDate());
+    return x.getMonth() === d.getMonth() ? x : new Date(y, d.getMonth() + 1, 0);
+  }
+  var SCHAEDEN = ['Faden gerissen', 'Gewebe gerissen', 'Gewebe löst sich vom Rahmen', 'Magnet hält nicht', 'Schliesst nicht, klemmt',
+    'Laufschiene beschädigt', 'Rahmen verbogen', 'Halter, Klemme gebrochen', 'Sonstiges'];
   function colNum(s) { var n = 0; for (var i = 0; i < s.length; i++) n = n * 26 + (s.charCodeAt(i) - 64); return n; }
   function colName(n) { var s = ''; while (n > 0) { var m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; }
 
@@ -1432,6 +1484,13 @@ textarea.in { min-height: 64px; resize: vertical; }
       var p = await tableData('tblPositionen'); ord.PH = p.headers; ord.pos = p.rows;
       try { ord.gruende = (await tableRows('tblAblehnungsgruende')).map(function (r) { return trimmed(r[0]); }).filter(Boolean); } catch (e) { ord.gruende = []; }
       if (!ord.gruende.length) ord.gruende = ['Preis zu hoch', 'Konkurrenzangebot', 'Kunde meldet sich nicht', 'Kein Interesse mehr', 'Sonstiges'];
+      // Garantiefälle; fehlt das Blatt «Garantie» noch, gibt es keine Garantie-Funktionen
+      try {
+        var g = await tableData('tblGarantie'), iF = g.headers.indexOf('Fall-Nr');
+        ord.GH = g.headers; ord.gar = g.rows.filter(function (r) { return iF >= 0 && trimmed(r[iF]); }); ord.hasG = iF >= 0;
+      } catch (e) { ord.GH = []; ord.gar = []; ord.hasG = false; }
+      try { ord.schaeden = (await tableRows('tblSchadensarten')).map(function (r) { return trimmed(r[0]); }).filter(Boolean); } catch (e) { ord.schaeden = []; }
+      if (!ord.schaeden.length) ord.schaeden = SCHAEDEN.slice();
       ord.loaded = true; ord.loadedAt = Date.now(); ord.err = '';
     } catch (e) { ord.err = (e && e.message) || String(e); }
     ord.loading = false;
@@ -1451,20 +1510,38 @@ textarea.in { min-height: 64px; resize: vertical; }
     var list = ord.rows.filter(function (r) { return trimmed(ov(r, 'Auftragsnr')); });
     if (q) list = list.filter(function (r) { return ['Auftragsnr', 'Vorname', 'Nachname', 'Ort', 'Telefon'].map(function (k) { return ov(r, k); }).join(' ').toLowerCase().indexOf(q) >= 0; });
     else list = list.filter(function (r) { return stepCls(ov(r, 'Nächster Schritt')) !== 'grey'; });
-    if (!list.length) { box.innerHTML = '<div class="empty">' + (q ? 'Kein Auftrag gefunden.' : 'Keine offenen Aufträge.') + '</div>'; return; }
+    // Garantiefälle: offene immer, erledigte nur über die Suche (wie bei den Aufträgen)
+    var gl = ord.gar;
+    if (q) gl = gl.filter(function (g) { return ['Fall-Nr', 'Auftragsnr', 'Vorname', 'Nachname', 'Ort', 'Telefon'].map(function (k) { return gv(g, k); }).join(' ').toLowerCase().indexOf(q) >= 0; });
+    else gl = gl.filter(function (g) { return !caseClosed(g); });
+    if (!list.length && !gl.length) { box.innerHTML = '<div class="empty">' + (q ? 'Kein Auftrag gefunden.' : 'Keine offenen Aufträge.') + '</div>'; return; }
     // Gruppiert nach «Nächster Schritt» (= Titel): Dringendes zuerst, dann was zu tun ist, dann Warten, Erledigtes zuletzt.
     // Innerhalb gleicher Dringlichkeit steht der spätere Schritt im Ablauf oben (näher an der Zahlung).
     // In einer Gruppe: geplante Montagen nach Termin, sonst ältester Auftrag zuerst.
     var items = list.map(function (r) {
       var s = trimmed(ov(r, 'Nächster Schritt')), mg = Number(ov(r, 'Montage geplant'));
       return { r: r, s: s, rk: stepRank(s), fl: stepFlow(s), t: /^Montage/.test(s) && hasVal(ov(r, 'Montage geplant')) && mg > 0 ? mg : (Number(ov(r, 'Erfasst am')) || 0) };
-    });
+    }).concat(gl.map(function (g) {
+      var s = trimmed(gv(g, 'Nächster Schritt')), tg = Number(gv(g, 'Termin geplant'));
+      return { g: g, s: s, rk: stepRank(s), fl: stepFlow(s), t: /Termin geplant|Montage durchf/.test(s) && tg > 0 ? tg : (Number(gv(g, 'Gemeldet am')) || 0) };
+    }));
     items.sort(function (a, b) { return a.rk - b.rk || b.fl - a.fl || (a.s < b.s ? -1 : a.s > b.s ? 1 : 0) || a.t - b.t; });
     var counts = {}; items.forEach(function (it) { counts[it.s] = (counts[it.s] || 0) + 1; });
     var html = '', grp = null;
     items.forEach(function (it) {
       var r = it.r, s = it.s;
       if (s !== grp) { html += '<div class="ord-grp"><span>' + esc(s || 'Ohne nächsten Schritt') + '</span><span class="cnt">' + counts[s] + '</span></div>'; grp = s; }
+      if (it.g) {
+        // Garantiefall: Name, Fall-Nr; darunter Termin (falls geplant) oder Ort, Bereich, gemeldet am
+        var g = it.g, tm = gv(g, 'Termin geplant');
+        var gsub = (hasVal(tm) && !hasVal(gv(g, 'Erledigt am')))
+          ? [serialDT(tm), trimmed(gv(g, 'Ort')), trimmed(gv(g, 'Bereich'))]
+          : [trimmed(gv(g, 'Ort')), trimmed(gv(g, 'Bereich')), serialText(gv(g, 'Gemeldet am')) ? 'gemeldet ' + serialText(gv(g, 'Gemeldet am')) : ''];
+        html += '<button class="ord" data-nr="' + esc(trimmed(gv(g, 'Auftragsnr'))) + '">' +
+          '<span class="l1"><span class="who">' + esc(caseName(g) || 'Ohne Namen') + '</span><span class="nr">, ' + esc(trimmed(gv(g, 'Fall-Nr'))) + '</span></span>' +
+          '<span class="sub">' + esc(gsub.filter(Boolean).join(', ')) + '</span></button>';
+        return;
+      }
       var amt = hasVal(ov(r, 'Betrag CHF')) ? 'CHF ' + fmt2.format(Number(ov(r, 'Betrag CHF'))) : '';
       var doc = ov(r, 'Verkaufsart') === 'Direktbestellung' ? 'Kaufvertrag' : 'Offerte';
       // Geplante Montage (noch nicht montiert): Termin mit Wochentag und Uhrzeit vorne, statt Erfassungsdatum
@@ -1567,6 +1644,9 @@ textarea.in { min-height: 64px; resize: vertical; }
         steps += stepRow(ms > 0, false, 'Mahnungen', ms ? ms + '. Mahnung am ' + serialText(ov(r, 'Letzte Mahnung')) : 'Noch keine. Mahnungen als PDF folgen in der nächsten App-Version', '');
       }
     }
+    // Offene Garantiefälle direkt unter dem Kopf: das ist dann die aktuelle Arbeit
+    var faelle = casesOf(nr);
+    html += faelle.filter(function (g) { return !caseClosed(g); }).map(caseCard).join('');
     html += '<section class="card"><div class="card-b"><h3 class="d-h">Ablauf</h3><div>' + steps + '</div></div></section>';
     html += prodHtml;
 
@@ -1583,34 +1663,90 @@ textarea.in { min-height: 64px; resize: vertical; }
       html += '<section class="card"><div class="card-b d-cost"><div class="d-hrow"><h3 class="d-h">Kosten</h3>' +
         (hatKosten ? '<button class="chg" data-ordact="cost">ändern</button>' : '') + '</div>' + kosten + '</div></section>';
     }
+
+    // Garantie (montierte Aufträge): gleicher Kachel-Aufbau und Titel wie «Kosten»
+    var mont = ov(r, 'Montiert am');
+    if (hasVal(mont) || faelle.length) {
+      var bis = garantieBis(mont), heute = new Date(); heute.setHours(0, 0, 0, 0);
+      var gkv = [['Montiert', serialText(mont) || '–'], ['Garantie bis', bis ? dateCH(bis) + (bis < heute ? ', abgelaufen' : '') : '–']];
+      var zu = faelle.filter(caseClosed).map(function (g) {
+        var fall = trimmed(gv(g, 'Fall-Nr')), s = trimmed(gv(g, 'Nächster Schritt')), wie;
+        if (/neue Offerte/.test(s)) wie = 'neue Offerte ' + trimmed(gv(g, 'Neue Offerte'));
+        else if (/ohne Offerte/.test(s)) wie = 'ohne Offerte abgeschlossen';
+        else wie = 'erledigt ' + serialText(gv(g, 'Erledigt am'));
+        return stepRow(true, false, fall + ', ' + (trimmed(gv(g, 'Bereich')) || 'Pos. ' + trimmed(gv(g, 'Pos'))), [trimmed(gv(g, 'Schaden')), wie].filter(Boolean).join(', '),
+          hasVal(gv(g, 'Erledigt am')) ? '<button class="chg" data-ordact="edit" data-fall="' + esc(fall) + '" data-f="Erledigt am" data-label="Erledigt">ändern</button>' : '');
+      }).join('');
+      html += '<section class="card"><div class="card-b d-cost"><div class="d-hrow"><h3 class="d-h">Garantie</h3></div>' +
+        '<div class="d-kv">' + gkv.map(function (x) { return span(x[0]) + span(x[1]); }).join('') + '</div>' +
+        (zu ? '<div>' + zu + '</div>' : '') +
+        (hasVal(mont) && ord.hasG ? '<button class="btn" data-ordact="gNew">Garantiefall erfassen</button>' : '') +
+        '</div></section>';
+    }
     box.innerHTML = html;
+  }
+  // Ein offener Garantiefall mit eigenem Ablauf. Innerhalb der Garantiezeit ist es immer Garantie.
+  function caseCard(g) {
+    var fall = trimmed(gv(g, 'Fall-Nr')), gar = trimmed(gv(g, 'Garantie')), df = ' data-fall="' + esc(fall) + '"';
+    var meld = [serialText(gv(g, 'Gemeldet am')), trimmed(gv(g, 'Bereich')) || 'Pos. ' + trimmed(gv(g, 'Pos')), trimmed(gv(g, 'Schaden')), trimmed(gv(g, 'Bemerkung'))].filter(Boolean).join(', ');
+    var rows = stepRow(true, false, 'Gemeldet', meld, '<button class="chg" data-ordact="gEdit"' + df + '>ändern</button>'), extra = '';
+    if (gar === 'Ja') {
+      rows += stepRow(true, false, 'Garantie', 'gültig bis ' + serialText(gv(g, 'Garantie bis')), '');
+      var F = [
+        { f: 'Ersatz bestellt am', l: 'Ersatz bestellt', b: 'Bestellt' },
+        { f: 'Ersatz eingetroffen am', l: 'Ersatz eingetroffen', b: 'Eingetroffen' },
+        { f: 'Termin geplant', l: 'Termin', b: 'Termin wählen', pick: true, time: true },
+        { f: 'Erledigt am', l: 'Erledigt', b: 'Erledigt' }
+      ];
+      var nextF = null; F.forEach(function (x) { if (!nextF && !hasVal(gv(g, x.f))) nextF = x.f; });
+      F.forEach(function (x) {
+        var v = gv(g, x.f), isNext = nextF === x.f, a = df + ' data-f="' + esc(x.f) + '" data-label="' + esc(x.l) + '"' + (x.time ? ' data-time="1"' : '');
+        if (hasVal(v)) rows += stepRow(true, false, x.l, x.time ? serialDT(v) : serialText(v), '<button class="chg" data-ordact="edit"' + a + '>ändern</button>');
+        else rows += stepRow(false, isNext, x.l, '', '<button class="btn' + (isNext ? ' primary' : '') + '" data-ordact="' + (x.pick ? 'date' : 'set') + '"' + a + '>' + esc(x.b) + '</button>');
+      });
+      var kE = gv(g, 'Kosten Einkauf CHF'), kL = gv(g, 'Kosten Lieferung CHF'), hk = hasVal(kE) || hasVal(kL);
+      rows += '<div class="step-row"><span class="lbl' + (hk ? '' : ' muted') + '">Kosten Ersatz' +
+        (hk ? '<small>' + ['Einkauf CHF ' + fmt2.format(Number(kE) || 0), 'Lieferung CHF ' + fmt2.format(Number(kL) || 0)].join(', ') + '</small>' : '') + '</span>' +
+        '<button class="chg" data-ordact="gCost"' + df + '>' + (hk ? 'ändern' : 'eintragen') + '</button></div>';
+    } else if (gar === 'Nein') {
+      rows += stepRow(false, true, 'Garantie abgelaufen', 'am ' + serialText(gv(g, 'Garantie bis')), '');
+      extra = '<div class="g-acts"><button class="btn primary" data-ordact="gOffer"' + df + '>Neue Offerte erstellen</button></div>' +
+        '<button class="g-link" data-ordact="gClose"' + df + '>Ohne Offerte abschliessen</button>';
+    } else {
+      rows += stepRow(false, true, 'Montagedatum fehlt', 'Im Ablauf des Auftrags zuerst «Montiert» eintragen', '');
+    }
+    var foto = trimmed(gv(g, 'Fotos-Link'));
+    return '<section class="card"><div class="card-b"><h3 class="d-h">Garantiefall ' + esc(fall) + '</h3><div>' + rows + '</div>' + extra +
+      (foto ? '<div class="d-links"><a class="btn" href="' + esc(foto) + '" target="_blank" rel="noopener">Fotos öffnen</a></div>' : '') + '</div></section>';
   }
   function openOrder(nr) { ord.sel = nr; $('ordListView').hidden = true; $('ordDetail').hidden = false; renderDetail(); window.scrollTo(0, 0); }
   function closeOrder() { ord.sel = null; $('ordDetail').hidden = true; $('ordListView').hidden = false; renderOrders(); window.scrollTo(0, 0); }
 
   // Einzelne Zellen des Auftrags im Excel setzen. Die Zeile wird jedes Mal frisch gesucht,
   // weil die Tabelle im Excel inzwischen sortiert oder gefiltert sein kann.
-  var wsIdCache = null;
-  async function writeOrderCells(nr, map) {
+  var wsIdCache = {};
+  async function writeRowCells(table, keyCol, key, map) {
     var id = await workbookId();
-    var t = await tableData('tblAuftraege'), H = t.headers, iNr = H.indexOf('Auftragsnr'), idx = -1;
-    t.rows.forEach(function (r, i) { if (idx < 0 && trimmed(r[iNr]) === nr) idx = i; });
-    if (idx < 0) throw new Error('Auftrag ' + nr + ' wurde im Büro-Excel nicht gefunden.');
-    var rng = await graph('GET', '/me/drive/items/' + id + '/workbook/tables/tblAuftraege/rows/itemAt(index=' + idx + ')/range');
+    var t = await tableData(table), H = t.headers, iK = H.indexOf(keyCol), idx = -1;
+    t.rows.forEach(function (r, i) { if (idx < 0 && trimmed(r[iK]) === key) idx = i; });
+    if (idx < 0) throw new Error((table === 'tblGarantie' ? 'Garantiefall ' : 'Auftrag ') + key + ' wurde im Büro-Excel nicht gefunden.');
+    var rng = await graph('GET', '/me/drive/items/' + id + '/workbook/tables/' + table + '/rows/itemAt(index=' + idx + ')/range');
     var m = /!\$?([A-Z]+)\$?(\d+)/.exec(String(rng.address || ''));
     if (!m) throw new Error('Zeile im Büro-Excel nicht gefunden.');
     var c0 = colNum(m[1]), row = Number(m[2]);
-    if (!wsIdCache) { var ws = await graph('GET', '/me/drive/items/' + id + '/workbook/tables/tblAuftraege/worksheet'); wsIdCache = ws.id; }
+    if (!wsIdCache[table]) { var ws = await graph('GET', '/me/drive/items/' + id + '/workbook/tables/' + table + '/worksheet'); wsIdCache[table] = ws.id; }
     for (var k in map) {
       var j = H.indexOf(k); if (j < 0) throw new Error('Spalte «' + k + '» fehlt im Büro-Excel.');
-      await graph('PATCH', '/me/drive/items/' + id + '/workbook/worksheets/' + encodeURIComponent(wsIdCache) + "/range(address='" + colName(c0 + j) + row + "')", { values: [[map[k]]] });
+      await graph('PATCH', '/me/drive/items/' + id + '/workbook/worksheets/' + encodeURIComponent(wsIdCache[table]) + "/range(address='" + colName(c0 + j) + row + "')", { values: [[map[k]]] });
     }
   }
-  async function setFields(nr, map) {
+  function writeOrderCells(nr, map) { return writeRowCells('tblAuftraege', 'Auftragsnr', nr, map); }
+  // fall gesetzt = Zellen des Garantiefalls (Blatt «Garantie») statt des Auftrags
+  async function setFields(nr, map, fall) {
     busy = true;
     dialog('<h3>Wird gespeichert …</h3><p>Eintrag ins Büro-Excel</p>');
     try {
-      await writeOrderCells(nr, map);
+      if (fall) await writeRowCells('tblGarantie', 'Fall-Nr', fall, map); else await writeOrderCells(nr, map);
       await loadOrders();
       busy = false; closeDialog();
     } catch (e) {
@@ -1691,7 +1827,7 @@ textarea.in { min-height: 64px; resize: vertical; }
   }
 
   // Datum wählen; mit withTime zusätzlich Uhrzeit (Montagetermin). Datum und Zeit liegen in EINER Excel-Zelle.
-  function dateDialog(nr, field, label, current, allowClear, withTime) {
+  function dateDialog(nr, field, label, current, allowClear, withTime, fall) {
     var d = fromSerial(current) || new Date(), tm = withTime ? timeOf(current) : '';
     var dateIn = '<input class="in" type="date" id="dlgDate" value="' + isoOf(d) + '" aria-label="Datum">';
     dialog('<h3>' + esc(label) + '</h3>' +
@@ -1708,11 +1844,11 @@ textarea.in { min-height: 64px; resize: vertical; }
         var t = $('dlgTime').value;
         if (!t) { $('dlgHint').textContent = 'Bitte eine Uhrzeit wählen.'; return; }
         var hm = t.split(':'); serial += (Number(hm[0]) * 60 + Number(hm[1])) / 1440;
-        if (CONFIG.calendar) { setMontage(nr, serial); return; }
+        if (CONFIG.calendar && !fall) { setMontage(nr, serial); return; }
       }
-      setFields(nr, mapOf(field, serial));
+      setFields(nr, mapOf(field, serial), fall);
     };
-    dialogActions.dateClr = function () { if (withTime && CONFIG.calendar) setMontage(nr, ''); else setFields(nr, mapOf(field, '')); };
+    dialogActions.dateClr = function () { if (withTime && CONFIG.calendar && !fall) setMontage(nr, ''); else setFields(nr, mapOf(field, ''), fall); };
   }
   // Kosten eines Auftrags in CHF; leeres Feld = keine Angabe. Erlaubt: 245.50, 245,50, 1'200
   function parseChf(raw) {
@@ -1721,23 +1857,24 @@ textarea.in { min-height: 64px; resize: vertical; }
     if (!/^\d+(\.\d{1,2})?$/.test(s)) return { ok: false };
     return { ok: true, val: round(parseFloat(s), 2) };
   }
-  function costDialog(nr) {
-    var r = findOrder(nr); if (!r) return;
-    function cur(f) { var v = ov(r, f); return hasVal(v) ? String(round(Number(v), 2)) : ''; }
+  function costDialog(nr, fall) {
+    var r = fall ? findCase(fall) : findOrder(nr); if (!r) return;
+    function cur(f) { var v = fall ? gv(r, f) : ov(r, f); return hasVal(v) ? String(round(Number(v), 2)) : ''; }
     function feld(id, label, f) {
       return '<div class="field"><label for="' + id + '">' + label + '</label><div class="unit chf"><input class="in" id="' + id + '" inputmode="decimal" autocomplete="off" placeholder="0.00" value="' +
         esc(cur(f)) + '"><span>CHF</span></div></div>';
     }
-    dialog('<h3>Kosten</h3><p>Auftrag ' + esc(nr) + ' · ' + esc(custName(r) || 'Ohne Namen') + ' · Betrag CHF ' + fmt2.format(Number(ov(r, 'Betrag CHF')) || 0) + '</p>' +
+    dialog((fall ? '<h3>Kosten Ersatz</h3><p>Garantiefall ' + esc(fall) + ', ' + esc(caseName(r) || 'Ohne Namen') + '. Diese Kosten werden im Dashboard vom Gewinn abgezogen.</p>'
+      : '<h3>Kosten</h3><p>Auftrag ' + esc(nr) + ' · ' + esc(custName(r) || 'Ohne Namen') + ' · Betrag CHF ' + fmt2.format(Number(ov(r, 'Betrag CHF')) || 0) + '</p>') +
       '<div class="grid2">' + feld('kE', 'Einkauf', 'Kosten Einkauf CHF') + feld('kL', 'Lieferung', 'Kosten Lieferung CHF') + '</div>' +
-      '<p>Lieferung für mehrere Aufträge: ganzen Betrag bei einem Auftrag eintragen, bei den anderen 0 – oder selbst aufteilen.</p>' +
+      (fall ? '' : '<p>Lieferung für mehrere Aufträge: ganzen Betrag bei einem Auftrag eintragen, bei den anderen 0 – oder selbst aufteilen.</p>') +
       '<div class="hint" id="kHint"></div>' +
       '<div class="acts"><button class="btn primary" data-act="costGo">Speichern</button><button class="btn" data-act="close">Abbrechen</button></div>');
     dialogActions.costGo = function () {
       var e = parseChf($('kE').value), l = parseChf($('kL').value);
       $('kE').classList.toggle('err', !e.ok); $('kL').classList.toggle('err', !l.ok);
       if (!e.ok || !l.ok) { $('kHint').textContent = 'Bitte nur Beträge eingeben, z. B. 245.50'; return; }
-      setFields(nr, { 'Kosten Einkauf CHF': e.val, 'Kosten Lieferung CHF': l.val });
+      setFields(nr, { 'Kosten Einkauf CHF': e.val, 'Kosten Lieferung CHF': l.val }, fall);
     };
   }
   function rejectDialog(nr, editing) {
@@ -1795,6 +1932,166 @@ textarea.in { min-height: 64px; resize: vertical; }
     }
   }
 
+  // ================= Garantiefall erfassen / ändern =================
+  // Ein Produkt pro Fall. Der Schaden kommt aus der Liste im Büro-Excel (Stammdaten), damit er sich auswerten lässt.
+  // Fotos (freiwillig) landen im Auftragsordner unter «Garantie <Fall-Nr>», verkleinert auf höchstens 1600 Pixel.
+  var ICON_CAM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+  function caseDialog(nr, fall) {
+    var r = findOrder(nr); if (!r || !ord.hasG) return;
+    var g = fall ? findCase(fall) : null; if (fall && !g) return;
+    var pos = posOf(nr), files = [], capture = uid(), pending = {};
+    var curPos = g ? trimmed(gv(g, 'Pos')) : (pos.length === 1 ? trimmed(pv(pos[0], 'Pos')) : '');
+    var curSch = g ? trimmed(gv(g, 'Schaden')) : '', curBem = g ? trimmed(gv(g, 'Bemerkung')) : '';
+    var curDate = g ? fromSerial(gv(g, 'Gemeldet am')) : null;
+    var liste = ord.schaeden.slice(); if (curSch && liste.indexOf(curSch) < 0) liste.push(curSch);
+    var opts = pos.map(function (p) {
+      var n = trimmed(pv(p, 'Pos')), txt = n + '. ' + [trimmed(pv(p, 'Bereich')), trimmed(pv(p, 'Produkt'))].filter(Boolean).join(', ');
+      return '<label class="g-opt"><input type="radio" name="gPos" value="' + esc(n) + '"' + (n === curPos ? ' checked' : '') + '><span>' + esc(txt) + '</span></label>';
+    }).join('');
+    dialog('<h3>' + (g ? 'Garantiefall ' + esc(fall) : 'Garantiefall erfassen') + '</h3>' +
+      '<div class="g-sec"><div class="g-lbl">Welches Produkt?</div><div class="g-opts" id="gPos">' + (opts || '<p>Zu diesem Auftrag gibt es keine Produkte im Blatt «Positionen».</p>') + '</div></div>' +
+      '<div class="field"><label for="gSch">Was ist passiert?</label><select class="in" id="gSch"><option value="">Bitte wählen</option>' +
+        liste.map(function (s) { return '<option' + (s === curSch ? ' selected' : '') + '>' + esc(s) + '</option>'; }).join('') + '</select></div>' +
+      '<div class="field"><label for="gBem">Bemerkung <i>(freiwillig)</i></label><textarea class="in" id="gBem" rows="2" placeholder="z. B. seit dem Sturm">' + esc(curBem) + '</textarea></div>' +
+      '<div class="g-sec"><div class="g-lbl">Fotos <i>(freiwillig' + (g && trimmed(gv(g, 'Fotos-Link')) ? ', kommen zu den bisherigen' : '') + ')</i></div><div class="g-fotos" id="gFotos"></div>' +
+        '<input class="vh" type="file" id="gFile" accept="image/*" multiple tabindex="-1" aria-hidden="true"></div>' +
+      '<div class="field"><label for="gDate">Gemeldet am</label><input class="in" type="date" id="gDate" value="' + isoOf(curDate || new Date()) + '"></div>' +
+      '<div class="hint" id="gHint"></div>' +
+      '<div class="acts"><button class="btn primary" data-act="gSave">Speichern</button><button class="btn" data-act="close">Abbrechen</button></div>');
+    function thumbs() {
+      $('gFotos').innerHTML = files.map(function (f, i) {
+        return '<button class="g-foto" data-act="gRm" data-i="' + i + '" aria-label="Foto ' + (i + 1) + ' entfernen"><img src="' + f.url + '" alt=""><span aria-hidden="true">×</span></button>';
+      }).join('') + '<button class="g-add" data-act="gPick" aria-label="Foto hinzufügen">' + ICON_CAM + '</button>';
+    }
+    thumbs();
+    $('gFile').addEventListener('change', function () {
+      Array.prototype.forEach.call(this.files || [], function (f) { files.push({ file: f, url: URL.createObjectURL(f) }); });
+      this.value = ''; thumbs();
+    });
+    dialogActions.gPick = function () { $('gFile').click(); };
+    dialogActions.gRm = function (b) { var i = Number(b.dataset.i); if (files[i]) { URL.revokeObjectURL(files[i].url); files.splice(i, 1); } thumbs(); };
+    dialogActions.gSave = function () {
+      var sel = $('dlg').querySelector('input[name="gPos"]:checked'), sch = $('gSch').value, bem = trimmed($('gBem').value), dv = $('gDate').value, msg = '';
+      $('gPos').classList.toggle('err', !sel); $('gSch').classList.toggle('err', !sch);
+      if (!sel) msg = 'Bitte das Produkt wählen.';
+      else if (!sch) msg = 'Bitte wählen, was passiert ist.';
+      else if (sch === 'Sonstiges' && !bem) { msg = 'Bei «Sonstiges» bitte in der Bemerkung kurz beschreiben, was passiert ist.'; $('gBem').classList.add('err'); }
+      else if (!dv) msg = 'Bitte das Datum wählen.';
+      $('gHint').textContent = msg; if (msg) return;
+      var p = pos.filter(function (x) { return trimmed(pv(x, 'Pos')) === sel.value; })[0], d = dv.split('-');
+      var data = { 'Gemeldet am': excelDate(new Date(+d[0], +d[1] - 1, +d[2])), 'Pos': Number(sel.value), 'Bereich': p ? trimmed(pv(p, 'Bereich')) : '',
+        'Produkt': p ? trimmed(pv(p, 'Produkt')) : '', 'Schaden': sch, 'Bemerkung': bem };
+      saveCase(nr, fall, data, files.map(function (f) { return f.file; }), capture, pending);
+    };
+  }
+  // Foto verkleinern (JPEG, höchstens 1600 Pixel); klappt das nicht, wird das Original hochgeladen
+  function shrinkPhoto(file) {
+    return new Promise(function (res) {
+      var url = URL.createObjectURL(file), img = new Image();
+      function done(b, ext) { URL.revokeObjectURL(url); res({ blob: b, ext: ext }); }
+      var orig = (String(file.name || '').split('.').pop() || 'jpg').toLowerCase();
+      img.onload = function () {
+        try {
+          var k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement('canvas');
+          c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          c.toBlob(function (b) { if (b) done(b, 'jpg'); else done(file, orig); }, 'image/jpeg', 0.85);
+        } catch (e) { done(file, orig); }
+      };
+      img.onerror = function () { done(file, orig); };
+      img.src = url;
+    });
+  }
+  function orderFolderPath(r) {
+    var folder = '';
+    try { folder = decodeURIComponent(trimmed(ov(r, 'Ordner-Link')).split('?')[0].split('/').pop()); } catch (e) { folder = ''; }
+    if (!folder) {
+      var person = safeName([trimmed(ov(r, 'Nachname')), trimmed(ov(r, 'Vorname'))].filter(Boolean).join(' ')) || 'Kunde';
+      folder = safeName(trimmed(ov(r, 'Auftragsnr')) + ' ' + (ov(r, 'Verkaufsart') === 'Direktbestellung' ? 'Kaufvertrag' : 'Offerte') + ' ' + person);
+    }
+    return CONFIG.basePath + '/' + CONFIG.ordersFolder + '/' + folder;
+  }
+  // pending bleibt für «Nochmals versuchen» erhalten: gleiche Fall-Nr, schon hochgeladene Fotos nicht doppelt
+  async function saveCase(nr, fall, data, photos, capture, pending) {
+    if (busy) return; busy = true;
+    var r = findOrder(nr);
+    dialog('<h3>Wird gespeichert …</h3><p>' + (photos.length ? 'Fotos und ' : '') + 'Eintrag ins Büro-Excel</p>');
+    try {
+      var t = await tableData('tblGarantie'), H = t.headers;
+      function cv(row, name) { var i = H.indexOf(name); return i < 0 ? '' : row[i]; }
+      var key = fall || pending.fall;
+      if (!fall) {
+        var dup = t.rows.filter(function (x) { return cv(x, 'Erfassungs-ID') === capture; })[0];
+        if (dup) { busy = false; await loadOrders(); closeDialog(); return; }
+        if (!pending.fall) {
+          var max = 0;
+          t.rows.forEach(function (x) { var m = new RegExp('^' + nr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '-G(\\d+)$').exec(trimmed(cv(x, 'Fall-Nr'))); if (m && Number(m[1]) > max) max = Number(m[1]); });
+          pending.fall = nr + '-G' + (max + 1);
+        }
+        key = pending.fall;
+      }
+      // Fotos in den Auftragsordner, Unterordner «Garantie <Fall-Nr>»
+      if (photos.length) {
+        var base = orderFolderPath(r), sub = 'Garantie ' + key;
+        if (!pending.folderUrl) {
+          var it = null;
+          try { it = await graph('POST', '/me/drive/root:/' + encPath(base) + ':/children', { name: sub, folder: {}, '@microsoft.graph.conflictBehavior': 'fail' }); }
+          catch (e) { if (e.status === 404) throw new Error('Auftragsordner nicht gefunden: ' + base); if (e.status !== 409) throw e; }
+          if (!it) it = await graph('GET', '/me/drive/root:/' + encPath(base + '/' + sub));
+          pending.folderUrl = it.webUrl;
+        }
+        pending.done = pending.done || 0;
+        var stamp = isoOf(new Date()).replace(/-/g, '') + '-' + String(Date.now()).slice(-5);
+        for (var i = pending.done; i < photos.length; i++) {
+          var ph = await shrinkPhoto(photos[i]);
+          await graph('PUT', '/me/drive/root:/' + encPath(base + '/' + sub + '/Foto_' + key + '_' + stamp + '_' + (i + 1) + '.' + ph.ext) + ':/content?@microsoft.graph.conflictBehavior=rename',
+            ph.blob, ph.ext === 'jpg' ? 'image/jpeg' : (photos[i].type || 'application/octet-stream'));
+          pending.done = i + 1;
+        }
+      }
+      if (fall) {
+        var upd = Object.assign({}, data);
+        if (pending.folderUrl && !trimmed(gv(findCase(fall) || [], 'Fotos-Link'))) upd['Fotos-Link'] = pending.folderUrl;
+        await writeRowCells('tblGarantie', 'Fall-Nr', fall, upd);
+      } else {
+        // Werte nach Spaltenname; Formelspalten (Name, Montagedatum, Garantie, Nächster Schritt …) füllt Excel selbst
+        var rec = Object.assign({ 'Fall-Nr': key, 'Auftragsnr': nr, 'Fotos-Link': pending.folderUrl || '', 'Erfassungs-ID': capture }, data);
+        await addRows('tblGarantie', [H.map(function (h) { return Object.prototype.hasOwnProperty.call(rec, h) ? rec[h] : null; })]);
+      }
+      await loadOrders();
+      busy = false; closeDialog();
+    } catch (e) {
+      busy = false;
+      dialog('<h3>Speichern nicht möglich</h3><div class="err-box">' + esc((e && e.message) || String(e)) + '</div>' +
+        '<p>Du kannst es nochmals versuchen; schon hochgeladene Fotos werden nicht doppelt gespeichert.</p>' +
+        '<div class="acts"><button class="btn primary" data-act="gRetry">Nochmals versuchen</button><button class="btn" data-act="close">Abbrechen</button></div>');
+      dialogActions.gRetry = function () { saveCase(nr, fall, data, photos, capture, pending); };
+    }
+  }
+  // Ausserhalb der Garantie: «Erfassen» mit den Kundendaten öffnen; die neue Auftragsnr wird beim Speichern beim Fall eingetragen
+  function offerFromCase(nr, fall) {
+    var r = findOrder(nr); if (!r) return;
+    function go() {
+      state = emptyState(); touched = {};
+      state.customer = { vorname: trimmed(ov(r, 'Vorname')), nachname: trimmed(ov(r, 'Nachname')), strasse: trimmed(ov(r, 'Strasse')), plz: trimmed(ov(r, 'PLZ')),
+        ort: trimmed(ov(r, 'Ort')), telefon: trimmed(ov(r, 'Telefon')), email: trimmed(ov(r, 'E-Mail')) };
+      state.garantieFall = fall;
+      closeDialog(); ord.sel = null; $('ordDetail').hidden = true; $('ordListView').hidden = false;
+      renderAll(true); showTab('erfassen');
+    }
+    var c = state.customer || {};
+    if (state.elements.length || ['vorname', 'nachname', 'strasse', 'plz', 'ort', 'telefon', 'email'].some(function (k) { return trimmed(c[k]); })) {
+      dialog('<h3>Erfassung ersetzen?</h3><p>Im Reiter «Erfassen» ist noch eine Erfassung offen. Sie wird gelöscht und durch die Kundendaten von ' + esc(custName(r) || 'diesem Kunden') + ' ersetzt.</p>' +
+        '<div class="acts"><button class="btn primary" data-act="gGo">Ersetzen und Offerte erstellen</button><button class="btn" data-act="close">Abbrechen</button></div>');
+      dialogActions.gGo = go;
+    } else go();
+  }
+  function closeCaseDialog(nr, fall) {
+    dialog('<h3>Ohne Offerte abschliessen?</h3><p>Garantiefall ' + esc(fall) + ' wird als erledigt eingetragen, ohne neue Offerte. Er bleibt im Büro-Excel für die Auswertung.</p>' +
+      '<div class="acts"><button class="btn primary" data-act="gCloseGo">Abschliessen</button><button class="btn" data-act="close">Abbrechen</button></div>');
+    dialogActions.gCloseGo = function () { setFields(nr, mapOf('Erledigt am', excelDate(new Date())), fall); };
+  }
+
   // Reiter umschalten (bleibt innerhalb einer Sitzung erhalten, z. B. nach der Anmeldung)
   function showTab(t) {
     var a = t === 'auftraege';
@@ -1813,12 +2110,17 @@ textarea.in { min-height: 64px; resize: vertical; }
   $('viewAuftraege').addEventListener('click', function (ev) {
     var b = ev.target.closest('[data-ordact], .ord'); if (!b) return;
     if (b.classList.contains('ord')) { openOrder(b.dataset.nr); return; }
-    var act = b.dataset.ordact, f = b.dataset.f, nr = ord.sel, r = nr ? findOrder(nr) : null;
+    var act = b.dataset.ordact, f = b.dataset.f, nr = ord.sel, r = nr ? findOrder(nr) : null, fall = b.dataset.fall || null, gc = fall ? findCase(fall) : null;
     if (act === 'login') login();
     else if (act === 'back') closeOrder();
-    else if (act === 'set') setFields(nr, mapOf(f, excelDate(new Date())));
-    else if (act === 'date') dateDialog(nr, f, b.dataset.label, '', false, b.dataset.time === '1');
-    else if (act === 'edit') dateDialog(nr, f, b.dataset.label, r ? ov(r, f) : '', true, b.dataset.time === '1');
+    else if (act === 'set') setFields(nr, mapOf(f, excelDate(new Date())), fall);
+    else if (act === 'date') dateDialog(nr, f, b.dataset.label, '', false, b.dataset.time === '1', fall);
+    else if (act === 'edit') dateDialog(nr, f, b.dataset.label, fall ? (gc ? gv(gc, f) : '') : (r ? ov(r, f) : ''), true, b.dataset.time === '1', fall);
+    else if (act === 'gNew') caseDialog(nr, null);
+    else if (act === 'gEdit') caseDialog(nr, fall);
+    else if (act === 'gCost') costDialog(nr, fall);
+    else if (act === 'gOffer') offerFromCase(nr, fall);
+    else if (act === 'gClose') closeCaseDialog(nr, fall);
     else if (act === 'accept') acceptDialog(nr);
     else if (act === 'reject') rejectDialog(nr, false);
     else if (act === 'offerEdit') rejectDialog(nr, true);
