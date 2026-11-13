@@ -108,6 +108,12 @@ textarea.in { min-height: 64px; resize: vertical; }
 .unit { position: relative; }
 .unit .in { padding-right: 34px; font-variant-numeric: tabular-nums; }
 .unit span { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 14px; pointer-events: none; }
+/* Ja/Nein-Schalter (z. B. flache Laufschiene) */
+.lauf { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.lauf > span { font-size: 15px; font-weight: 500; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; width: 156px; flex: none; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-ctl); }
+.seg button { min-height: 40px; border: 0; border-radius: 9px; background: transparent; font: inherit; font-size: 16px; font-weight: 600; color: var(--muted); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
 .meta { font-size: 13.5px; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .meta b { color: var(--fg); font-weight: 600; }
 .pform { display: flex; flex-direction: column; gap: 12px; border-radius: 16px; scroll-margin-top: calc(80px + env(safe-area-inset-top, 0px)); }
@@ -314,12 +320,17 @@ textarea.in { min-height: 64px; resize: vertical; }
         <!-- Nur bei Bereich «Sonstiges»: eintippen, was es ist -->
         <div class="field" id="zusatzWrap" hidden><label for="fZusatz">Bezeichnung <i>(nötig)</i></label><input class="in" id="fZusatz" placeholder="z. B. Wintergarten" autocomplete="off" enterkeyhint="next"></div>
         <div class="hint" id="hZusatz"></div>
+        <!-- Nur bei Produkten mit «Laufschiene wählbar» = Ja (Stammdaten) -->
+        <div class="lauf" id="laufWrap" hidden><span id="laufLbl">Flache Laufschiene</span>
+          <div class="seg" role="group" aria-labelledby="laufLbl"><button type="button" data-lauf="Nein" aria-pressed="false">Nein</button><button type="button" data-lauf="Ja" aria-pressed="false">Ja</button></div>
+        </div>
         <div class="grid2">
           <div class="field"><label for="fFarbe">Farbe</label><select class="in" id="fFarbe"></select></div>
-          <div class="field"><label for="fBreite">Breite</label><div class="unit"><input class="in" id="fBreite" inputmode="decimal" autocomplete="off" placeholder="0"><span>cm</span></div></div>
+          <div class="field"><label for="fGewebe">Gewebe</label><select class="in" id="fGewebe"></select></div>
         </div>
         <div class="field" id="farbeTextWrap" hidden><label for="fFarbeText">Farbwunsch des Kunden</label><input class="in" id="fFarbeText" placeholder="z. B. RAL 7016, Braun, Bronze" autocomplete="off" enterkeyhint="next"></div>
-        <div class="grid2">
+        <div class="grid3">
+          <div class="field"><label for="fBreite">Breite</label><div class="unit"><input class="in" id="fBreite" inputmode="decimal" autocomplete="off" placeholder="0"><span>cm</span></div></div>
           <div class="field"><label for="fHoehe">Höhe</label><div class="unit"><input class="in" id="fHoehe" inputmode="decimal" autocomplete="off" placeholder="0"><span>cm</span></div></div>
           <div class="field"><label for="fTiefe">Tiefe <i>(opt.)</i></label><div class="unit"><input class="in" id="fTiefe" inputmode="decimal" autocomplete="off" placeholder="0"><span>cm</span></div></div>
         </div>
@@ -420,8 +431,10 @@ textarea.in { min-height: 64px; resize: vertical; }
   function range(a, b) { var r = []; for (var x = a; x <= b; x += 10) r.push(x); return r; }
   var DEFAULTS = {
     zimmer: ['Schlafzimmer', 'Wohnzimmer', 'Esszimmer', 'Küche', 'WC', 'Badezimmer', 'Büro', 'Gamingzimmer', 'Sonstiges'],
-    produkte: [{ name: 'Produkt 1', beschreibung: '' }, { name: 'Produkt 2', beschreibung: '' }, { name: 'Produkt 3', beschreibung: '' }, { name: 'Produkt 4', beschreibung: '' }],
+    produkte: [{ name: 'Klemmsystem', beschreibung: 'Mit Magnetverschluss', lauf: false }, { name: 'Plissee einflügelig', beschreibung: 'Mit Magnetverschluss', lauf: true },
+      { name: 'Plissee zweiflügelig', beschreibung: 'Mit Magnetverschluss', lauf: true }, { name: 'Plissee zweiflügelig, Mitte schliessend', beschreibung: 'Mit Magnetverschluss', lauf: true }],
     farben: ['Weiss', 'Anthrazit', 'Sonstige'],
+    gewebe: ['Normal', 'Pollenschutz'],
     firma: { firma: 'FlyGuard Arifi', strasse: 'Rebrainstrasse 17', plzOrt: '8106 Adlikon b. Regensdorf', telefon: '076 419 40 47', email: 'info@flyguard.ch', web: '', uid: 'CHE-225.710.567', gueltigTage: 30, zahlungsfrist: 30 },
     regeln: { fenster: { abHoehe: 0, aufB: 20, aufH: 15, rund: 5 }, tuer: { abHoehe: 200, aufB: 37.5, aufH: 15, rund: 5 } },
     raster: {
@@ -429,10 +442,12 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 7f';
+  var APP_VERSION = '13.11.2026 · 7g';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
-  var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'farbeText', 'breite', 'hoehe', 'tiefe', 'bem'];
-  var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
+  // «lauf» (flache Laufschiene: 'Ja' / 'Nein' / '') hat kein Eingabefeld, sondern den Ja/Nein-Schalter
+  var FIELDS = ['zimmer', 'zusatz', 'produkt', 'lauf', 'farbe', 'farbeText', 'gewebe', 'breite', 'hoehe', 'tiefe', 'bem'];
+  var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', gewebe: 'fGewebe', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
+  var INPUT_FIELDS = FIELDS.filter(function (k) { return INPUT_ID[k]; });
   var CUST_FIELDS = ['vorname', 'nachname', 'strasse', 'plz', 'ort', 'telefon', 'email'];
 
   // ================= Hilfsfunktionen =================
@@ -459,8 +474,13 @@ textarea.in { min-height: 64px; resize: vertical; }
 
   // ================= Stammdaten =================
   var master = restore(KEY_MASTER);
-  if (!master || !master.raster || !master.regeln) master = { zimmer: DEFAULTS.zimmer, produkte: DEFAULTS.produkte, farben: DEFAULTS.farben, regeln: DEFAULTS.regeln, raster: DEFAULTS.raster, source: 'Platzhalter', loadedAt: null };
-  function beschreibungFor(name) { for (var i = 0; i < master.produkte.length; i++) if (master.produkte[i].name === name) return master.produkte[i].beschreibung || ''; return ''; }
+  if (!master || !master.raster || !master.regeln) master = { zimmer: DEFAULTS.zimmer, produkte: DEFAULTS.produkte, farben: DEFAULTS.farben, gewebe: DEFAULTS.gewebe, regeln: DEFAULTS.regeln, raster: DEFAULTS.raster, source: 'Platzhalter', loadedAt: null };
+  if (!master.gewebe || !master.gewebe.length) master.gewebe = DEFAULTS.gewebe;
+  function productOf(name) { for (var i = 0; i < master.produkte.length; i++) if (master.produkte[i].name === name) return master.produkte[i]; return null; }
+  function beschreibungFor(name) { var p = productOf(name); return p ? p.beschreibung || '' : ''; }
+  function laufWaehlbar(name) { var p = productOf(name); return !!(p && p.lauf); }
+  // Wert für Excel und Dokument: bei Produkten ohne Schalter leer
+  function laufWert(e) { return laufWaehlbar(e.produkt) ? (e.lauf === 'Ja' ? 'Ja' : 'Nein') : ''; }
   function farbeLabel(e) { return e.farbe === 'Sonstige' ? (trimmed(e.farbeText) || 'Sonstige') : (e.farbe || ''); }
   function bereich(e) { var z = e.zimmer || '', zu = trimmed(e.zusatz); if (!z || z === 'Sonstiges') return zu; return zu ? z + ', ' + zu : z; }
 
@@ -494,9 +514,11 @@ textarea.in { min-height: 64px; resize: vertical; }
     var c = calc(e), t = parseCm(e.tiefe), out = [];
     if (!e.zimmer) out.push('Bereich');
     if (e.zimmer === 'Sonstiges' && !trimmed(e.zusatz)) out.push('Bezeichnung');
-    if (!e.produkt) out.push('Produkt');
+    if (!e.produkt || !productOf(e.produkt)) out.push('Produkt');
+    else if (laufWaehlbar(e.produkt) && e.lauf !== 'Ja' && e.lauf !== 'Nein') out.push('Laufschiene');
     if (!e.farbe) out.push('Farbe');
     else if (e.farbe === 'Sonstige' && !trimmed(e.farbeText)) out.push('Farbwunsch');
+    if (!e.gewebe) out.push('Gewebe');
     if (c.r && c.price == null) out.push('Preis (Raster prüfen)');
     if (!c.b.ok) out.push(c.b.empty ? 'Breite' : 'gültige Breite');
     if (!c.h.ok) out.push(c.h.empty ? 'Höhe' : 'gültige Höhe');
@@ -512,11 +534,16 @@ textarea.in { min-height: 64px; resize: vertical; }
     fill($('fZimmer'), master.zimmer);
     fill($('fProdukt'), master.produkte.map(function (p) { return p.name; }));
     fill($('fFarbe'), master.farben);
+    fill($('fGewebe'), master.gewebe);
   }
 
   // ================= Zustand =================
   var state = null;
-  function emptyForm(carry) { return { zimmer: '', zusatz: '', produkt: carry ? carry.produkt : '', farbe: carry ? carry.farbe : '', farbeText: carry ? (carry.farbeText || '') : '', breite: '', hoehe: '', tiefe: '', bem: '' }; }
+  // Produkt, Laufschiene, Farbe und Gewebe kommen vom vorherigen Produkt; beim ersten ist das Gewebe «Normal» (erster Eintrag)
+  function emptyForm(carry) {
+    return { zimmer: '', zusatz: '', produkt: carry ? carry.produkt : '', lauf: carry ? (carry.lauf || '') : '', farbe: carry ? carry.farbe : '', farbeText: carry ? (carry.farbeText || '') : '',
+      gewebe: carry && carry.gewebe ? carry.gewebe : (master.gewebe[0] || ''), breite: '', hoehe: '', tiefe: '', bem: '' };
+  }
   function emptyState() { return { captureId: uid(), startedAt: new Date().toISOString(), custOpen: true, prodOpen: true, sumOpen: true, decOpen: true, editId: null, stash: null, customer: {}, elements: [], form: emptyForm(null), pending: null }; }
   function save() { store(KEY_STATE, state); }
   function blankForm() { var last = state.elements.length ? state.elements[state.elements.length - 1] : null; return emptyForm(last); }
@@ -553,7 +580,7 @@ textarea.in { min-height: 64px; resize: vertical; }
 
   // Eingabetaste (↵) springt ins nächste Feld. Bereits ausgefüllte Auswahllisten werden übersprungen.
   var NEXT_ORDER = ['vorname', 'nachname', 'strasse', 'plz', 'ort', 'telefon', 'email', null,
-    'fZimmer', 'fProdukt', 'fZusatz', 'fFarbe', 'fBreite', 'fFarbeText', 'fHoehe', 'fTiefe', null];
+    'fZimmer', 'fProdukt', 'fZusatz', 'fFarbe', 'fGewebe', 'fFarbeText', 'fBreite', 'fHoehe', 'fTiefe', null];
   document.addEventListener('keydown', function (ev) {
     if (ev.key !== 'Enter' && ev.keyCode !== 13) return;
     var el = ev.target;
@@ -578,7 +605,10 @@ textarea.in { min-height: 64px; resize: vertical; }
   var touched = {};
   function renderForm(syncInputs) {
     var f = state.form, c = calc(f), editing = !!state.editId;
-    if (syncInputs) FIELDS.forEach(function (k) { $(INPUT_ID[k]).value = f[k] || ''; });
+    if (syncInputs) INPUT_FIELDS.forEach(function (k) { $(INPUT_ID[k]).value = f[k] || ''; });
+    var lw = laufWaehlbar(f.produkt);
+    $('laufWrap').hidden = !lw;
+    Array.prototype.forEach.call($('laufWrap').querySelectorAll('[data-lauf]'), function (b) { b.setAttribute('aria-pressed', String(lw && f.lauf === b.dataset.lauf)); });
     $('pform').classList.toggle('editing', editing);
     $('formHead').hidden = !editing;
     $('formTitle').textContent = editing ? 'Bearbeiten: ' + (bereich(f) || 'Produkt') : '';
@@ -612,15 +642,21 @@ textarea.in { min-height: 64px; resize: vertical; }
     $('fDelete').hidden = !editing; $('fCancel').hidden = !editing;
     if (!editing) { $('fDelete').textContent = 'Löschen'; $('fDelete').dataset.armed = ''; }
   }
-  FIELDS.forEach(function (k) {
+  INPUT_FIELDS.forEach(function (k) {
     var el = $(INPUT_ID[k]);
     el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', function () {
       state.form[k] = el.value;
       // Bezeichnung gibt es nur bei «Sonstiges»; bei einem anderen Bereich wird sie geleert
       if (k === 'zimmer') { if (el.value !== 'Sonstiges') { state.form.zusatz = ''; $('fZusatz').value = ''; touched.zusatz = false; } }
+      // Laufschiene: bei Plissee vorbelegt mit «Nein», bei Produkten ohne Schalter leer
+      if (k === 'produkt') { if (!laufWaehlbar(el.value)) state.form.lauf = ''; else if (state.form.lauf !== 'Ja') state.form.lauf = 'Nein'; }
       renderForm(false); save();
     });
     el.addEventListener('blur', function () { touched[k] = true; renderForm(false); });
+  });
+  $('laufWrap').addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-lauf]'); if (!b) return;
+    state.form.lauf = b.dataset.lauf; renderForm(false); save();
   });
   function resetForm() { touched = {}; if (state.stash) { state.form = state.stash; state.stash = null; } else { state.form = blankForm(); } state.editId = null; }
   $('fAdd').addEventListener('click', function () {
@@ -644,7 +680,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       var c = calc(e), miss = missing(e), name = bereich(e) || 'Ohne Bezeichnung';
       var sub = miss.length ? '<span class="sub w">⚠ Unvollständig: ' + esc(miss.join(', ')) + '</span>'
         : (c.r && c.r.outside ? '<span class="sub w">⚠ ausserhalb Raster · CHF ' + fmt2.format(c.price) + ' bitte prüfen</span>'
-        : '<span class="sub">' + esc([e.produkt, farbeLabel(e)].filter(Boolean).join(' · ')) + ' · ' + esc(e.breite) + ' × ' + esc(e.hoehe) + ' cm · CHF ' + fmt2.format(c.price) + '</span>');
+        : '<span class="sub">' + esc([e.produkt, laufWert(e) === 'Ja' ? 'flache Laufschiene' : '', farbeLabel(e), e.gewebe ? 'Gewebe ' + e.gewebe : ''].filter(Boolean).join(' · ')) + ' · ' + esc(e.breite) + ' × ' + esc(e.hoehe) + ' cm · CHF ' + fmt2.format(c.price) + '</span>');
       var m2 = c.area != null ? fmt2.format(c.area) + ' <small>m²</small>' : '<small>–</small>';
       return '<button class="row' + (e.id === state.editId ? ' active' : '') + '" data-id="' + e.id + '"><span class="num">' + (i + 1) + '</span>' +
         '<span class="txt"><span class="ttl">' + esc(name) + '</span>' + sub + '</span><span class="m2">' + m2 + '</span>' + ICON_CHEV + '</button>';
@@ -674,6 +710,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       var c = calc(e), t = parseCm(e.tiefe);
       var area = c.area != null ? round(c.area, 4) : null;
       return { pos: i + 1, zimmer: e.zimmer, zusatz: trimmed(e.zusatz), bereich: bereich(e), produkt: e.produkt, beschreibung: beschreibungFor(e.produkt), farbe: farbeLabel(e),
+        lauf: laufWert(e), gewebe: trimmed(e.gewebe),
         breite: c.b.ok ? c.b.val : null, hoehe: c.h.ok ? c.h.val : null, tiefe: t.ok ? t.val : null,
         area: area, price: c.price != null ? round(c.price, 2) : null, bem: trimmed(e.bem),
         art: c.r ? c.r.art : '', feld: c.r ? c.r.feld : '', outside: !!(c.r && c.r.outside) };
@@ -719,10 +756,11 @@ textarea.in { min-height: 64px; resize: vertical; }
     dialog('<h3>Muster-PDF</h3><p>Wird erstellt …</p>');
     try {
       if (!state.elements.length) {
+        var pr = master.produkte, gw = master.gewebe;
         state.elements = [
-          { id: 'm1', zimmer: 'Schlafzimmer', zusatz: '', produkt: master.produkte[0].name, farbe: master.farben[0], breite: '120', hoehe: '140', tiefe: '5', bem: '' },
-          { id: 'm2', zimmer: 'Küche', zusatz: '', produkt: master.produkte[0].name, farbe: master.farben[0], breite: '80', hoehe: '120', tiefe: '', bem: 'Fenstergriff beachten' },
-          { id: 'm3', zimmer: 'Büro', zusatz: '', produkt: master.produkte[0].name, farbe: master.farben[0], breite: '73', hoehe: '118', tiefe: '', bem: '' }
+          { id: 'm1', zimmer: 'Schlafzimmer', zusatz: '', produkt: pr[0].name, lauf: 'Nein', farbe: master.farben[0], gewebe: gw[0], breite: '120', hoehe: '140', tiefe: '5', bem: '' },
+          { id: 'm2', zimmer: 'Wohnzimmer', zusatz: '', produkt: pr[pr.length - 1].name, lauf: 'Ja', farbe: master.farben[0], gewebe: gw[gw.length - 1], breite: '160', hoehe: '215', tiefe: '', bem: '' },
+          { id: 'm3', zimmer: 'Küche', zusatz: '', produkt: pr[Math.min(1, pr.length - 1)].name, lauf: 'Nein', farbe: master.farben[0], gewebe: gw[0], breite: '80', hoehe: '120', tiefe: '', bem: 'Fenstergriff beachten' }
         ];
         if (!trimmed(cust.nachname)) cust = { vorname: 'Anna', nachname: 'Muster', strasse: 'Musterweg 12', plz: '8000', ort: 'Zürich', telefon: '079 123 45 67' };
       }
@@ -828,10 +866,13 @@ textarea.in { min-height: 64px; resize: vertical; }
   }
 
   // Tabelle mit Spaltennamen lesen (Reihenfolge der Spalten im Excel ist dann egal)
-  async function tableData(name) {
+  async function tableHeaders(name) {
     var id = await workbookId();
     var head = await graph('GET', '/me/drive/items/' + id + '/workbook/tables/' + name + '/headerRowRange');
-    return { headers: head.values[0].map(function (h) { return trimmed(h); }), rows: await tableRows(name) };
+    return head.values[0].map(function (h) { return trimmed(h); });
+  }
+  async function tableData(name) {
+    return { headers: await tableHeaders(name), rows: await tableRows(name) };
   }
   function col(t, name) { var i = t.headers.indexOf(name); if (i < 0) throw new Error('Spalte «' + name + '» fehlt'); return i; }
   function readGrid(t, label) {
@@ -845,9 +886,12 @@ textarea.in { min-height: 64px; resize: vertical; }
     try {
       var prod = await tableData('tblProdukte'), farb = await tableRows('tblFarben'), zim = await tableRows('tblZimmer');
       var reg = await tableData('tblPreisregeln'), rf = await tableData('tblRasterFenster'), rt = await tableData('tblRasterTuer');
-      var pN = col(prod, 'Produkt'), pB = col(prod, 'Beschreibung'), pA = prod.headers.indexOf('Aktiv');
+      var pN = col(prod, 'Produkt'), pB = col(prod, 'Beschreibung'), pA = prod.headers.indexOf('Aktiv'), pL = prod.headers.indexOf('Laufschiene wählbar');
       var produkte = prod.rows.filter(function (r) { return trimmed(r[pN]) && (pA < 0 || String(r[pA] || 'Ja').toLowerCase() !== 'nein'); })
-        .map(function (r) { return { name: trimmed(r[pN]), beschreibung: trimmed(r[pB]) }; });
+        .map(function (r) { return { name: trimmed(r[pN]), beschreibung: trimmed(r[pB]), lauf: pL >= 0 && /^j/i.test(trimmed(r[pL])) }; });
+      // Gewebe-Liste (Blatt «Stammdaten»); fehlt die Tabelle noch, gelten Normal / Pollenschutz
+      var gewebe = DEFAULTS.gewebe;
+      try { var gw = (await tableRows('tblGewebe')).map(function (r) { return trimmed(r[0]); }).filter(Boolean); if (gw.length) gewebe = gw; } catch (e) { /* Tabelle fehlt */ }
       var farben = farb.map(function (r) { return trimmed(r[0]); }).filter(Boolean);
       var zimmer = zim.map(function (r) { return trimmed(r[0]); }).filter(Boolean);
       if (!produkte.length || !farben.length || !zimmer.length) throw new Error('Stammdaten in Excel sind leer');
@@ -869,7 +913,7 @@ textarea.in { min-height: 64px; resize: vertical; }
         if (Number(map['offerte gültig tage']) > 0) fa.gueltigTage = Number(map['offerte gültig tage']);
         if (Number(map['zahlungsfrist tage']) > 0) fa.zahlungsfrist = Number(map['zahlungsfrist tage']);
       } catch (e) { /* Einstellungen fehlen: Standardwerte */ }
-      master = { produkte: produkte, farben: farben, zimmer: zimmer, regeln: regeln, raster: raster, firma: fa, source: 'Excel', loadedAt: new Date().toLocaleString('de-CH', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) };
+      master = { produkte: produkte, farben: farben, gewebe: gewebe, zimmer: zimmer, regeln: regeln, raster: raster, firma: fa, source: 'Excel', loadedAt: new Date().toLocaleString('de-CH', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) };
       store(KEY_MASTER, master); fillSelects(); renderAll(true);
       if (showResult) dialog('<h3>Aktualisiert</h3><p>Preisraster, ' + produkte.length + ' Produkte, ' + farben.length + ' Farben und ' + zimmer.length + ' Zimmer aus Excel geladen.</p><div class="acts"><button class="btn primary" data-act="close">OK</button></div>');
     } catch (e) {
@@ -958,7 +1002,9 @@ textarea.in { min-height: 64px; resize: vertical; }
     var tableTop = y + 7 + (intro.length - 1) * lh + 8;       // letzte Zeile + eine Leerzeile
     var body = o.positions.map(function (p) {
       var masse = fmt2.format(p.breite).replace(/\.00$/, '') + ' × ' + fmt2.format(p.hoehe).replace(/\.00$/, '') + (p.tiefe != null ? '\nTiefe ' + fmt2.format(p.tiefe).replace(/\.00$/, '') : '');
-      var prod = p.produkt + (p.beschreibung ? '\n' + p.beschreibung : '') + '\nFarbe: ' + p.farbe;
+      // Produkt (mit flacher Laufschiene), Beschreibung, Gewebe und Farbe je auf eigener Zeile
+      var prod = p.produkt + (p.lauf === 'Ja' ? ', flache Laufschiene' : '') + (p.beschreibung ? '\n' + p.beschreibung : '') +
+        (p.gewebe ? '\nGewebe: ' + p.gewebe : '') + '\nFarbe: ' + p.farbe;
       return [String(p.pos), p.bereich + (p.bem ? '\n' + p.bem : ''), prod, p.art, masse, fmt2.format(p.price)];
     });
     doc.autoTable({
@@ -1269,10 +1315,16 @@ textarea.in { min-height: 64px; resize: vertical; }
         'Offertenstatus': kind === 'direkt' ? 'Keine Offerte – Direktbestellung' : 'Offen', 'Erfassungs-ID': state.captureId
       };
       var orderRow = H.map(function (h) { return Object.prototype.hasOwnProperty.call(rec, h) ? rec[h] : null; });
+      // Positionen ebenfalls nach Spaltenname (Preis pro m² bleibt leer, der Preis kommt aus dem Raster)
+      var PH = await tableHeaders('tblPositionen');
       var posRows = pos.map(function (q) {
-        // 17 Spalten wie tblPositionen: … Preis pro m² bleibt leer (Preis kommt aus dem Raster), dann Art, Rasterfeld, Preishinweis
-        return [p.orderNo, q.pos, q.zimmer, q.zusatz, q.bereich, q.produkt, q.farbe, q.breite, q.hoehe, q.tiefe == null ? '' : q.tiefe, q.area, '', q.price, q.bem,
-          q.art, q.feld, q.outside ? 'ausserhalb Raster – bitte prüfen' : ''];
+        var pr = {
+          'Auftragsnr': p.orderNo, 'Pos': q.pos, 'Zimmer': q.zimmer, 'Zusatzbezeichnung': q.zusatz, 'Bereich': q.bereich, 'Produkt': q.produkt,
+          'Flache Laufschiene': q.lauf, 'Farbe': q.farbe, 'Gewebe': q.gewebe, 'Breite cm': q.breite, 'Höhe cm': q.hoehe, 'Tiefe cm': q.tiefe == null ? '' : q.tiefe,
+          'Fläche m²': q.area, 'Preis pro m²': '', 'Preis CHF': q.price, 'Bemerkung': q.bem, 'Art': q.art, 'Rasterfeld': q.feld,
+          'Preishinweis': q.outside ? 'ausserhalb Raster – bitte prüfen' : ''
+        };
+        return PH.map(function (h) { return Object.prototype.hasOwnProperty.call(pr, h) ? pr[h] : null; });
       });
       await addRows('tblPositionen', posRows);
       await addRows('tblAuftraege', [orderRow]);
@@ -1453,7 +1505,8 @@ textarea.in { min-height: 64px; resize: vertical; }
     if (pos.length) {
       html += '<section class="card"><div class="card-b"><h3 class="d-h">Produkte</h3><div>' + pos.map(function (p) {
         var masse = [pv(p, 'Breite cm'), pv(p, 'Höhe cm')].filter(hasVal).join(' × ');
-        var info = [trimmed(pv(p, 'Produkt')), trimmed(pv(p, 'Farbe')), masse ? masse + ' cm' : '', hasVal(pv(p, 'Preis CHF')) ? 'CHF ' + fmt2.format(Number(pv(p, 'Preis CHF'))) : ''].filter(Boolean).join(' · ');
+        var info = [trimmed(pv(p, 'Produkt')), trimmed(pv(p, 'Flache Laufschiene')) === 'Ja' ? 'flache Laufschiene' : '', trimmed(pv(p, 'Farbe')),
+          trimmed(pv(p, 'Gewebe')) ? 'Gewebe ' + trimmed(pv(p, 'Gewebe')) : '', masse ? masse + ' cm' : '', hasVal(pv(p, 'Preis CHF')) ? 'CHF ' + fmt2.format(Number(pv(p, 'Preis CHF'))) : ''].filter(Boolean).join(' · ');
         return '<div class="d-prod"><b>' + esc(pv(p, 'Pos')) + ' · ' + esc(trimmed(pv(p, 'Bereich')) || '–') + '</b><span>' + esc(info) + '</span>' +
           (trimmed(pv(p, 'Bemerkung')) ? '<span>' + esc(pv(p, 'Bemerkung')) + '</span>' : '') + '</div>';
       }).join('') + '</div></div></section>';
@@ -1691,7 +1744,7 @@ textarea.in { min-height: 64px; resize: vertical; }
         .map(function (p) {
           var prod = trimmed(pv(p, 'Produkt'));
           return { pos: Number(pv(p, 'Pos')) || 0, bereich: trimmed(pv(p, 'Bereich')), bem: trimmed(pv(p, 'Bemerkung')), produkt: prod, beschreibung: beschreibungFor(prod),
-            farbe: trimmed(pv(p, 'Farbe')), art: trimmed(pv(p, 'Art')), breite: Number(pv(p, 'Breite cm')) || 0, hoehe: Number(pv(p, 'Höhe cm')) || 0,
+            lauf: trimmed(pv(p, 'Flache Laufschiene')), gewebe: trimmed(pv(p, 'Gewebe')), farbe: trimmed(pv(p, 'Farbe')), art: trimmed(pv(p, 'Art')), breite: Number(pv(p, 'Breite cm')) || 0, hoehe: Number(pv(p, 'Höhe cm')) || 0,
             tiefe: hasVal(pv(p, 'Tiefe cm')) ? Number(pv(p, 'Tiefe cm')) : null, price: Number(pv(p, 'Preis CHF')) || 0 };
         });
       if (!pos.length) throw new Error('Zu diesem Auftrag gibt es im Blatt «Positionen» keine Produkte.');
