@@ -407,7 +407,7 @@ textarea.in { min-height: 64px; resize: vertical; }
     workbook: 'FlyGuard_Buero.xlsx',
     ordersFolder: 'Aufträge',
     company: 'FlyGuard',
-    scopes: ['User.Read', 'Files.ReadWrite']
+    scopes: ['User.Read', 'Files.ReadWrite', 'Calendars.ReadWrite']
   };
   // Ersatzwerte, falls Excel noch nicht geladen ist (gleiche Regeln wie im Blatt «Preisraster»)
   function makeGrid(widths, heights, fn) { return { widths: widths, heights: heights, cells: heights.map(function (h) { return widths.map(function (w) { return Math.round(fn(w, h) / 5) * 5; }); }) }; }
@@ -423,7 +423,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 7b';
+  var APP_VERSION = '13.11.2026 · 7c';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'farbeText', 'breite', 'hoehe', 'tiefe', 'bem'];
   var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
@@ -1519,6 +1519,78 @@ textarea.in { min-height: 64px; resize: vertical; }
       dialog('<h3>Speichern nicht möglich</h3><div class="err-box">' + esc((e && e.message) || String(e)) + '</div><div class="acts"><button class="btn primary" data-act="close">OK</button></div>');
     }
   }
+  // ================= Kalender =================
+  // Montagetermine kommen in den Outlook-Kalender des FlyGuard-Kontos; das iPhone zeigt ihn in der Kalender-App.
+  // Jeder Eintrag trägt die Auftragsnummer als versteckte Eigenschaft. So findet die App ihn beim Ändern
+  // oder Entfernen wieder, ohne zusätzliche Spalte im Büro-Excel.
+  var CAL_PROP = 'String {5f3c9a2e-7b41-4d8e-a6c2-91e0d4b7f318} Name FlyGuardAuftrag';
+  var CAL_DAUER_MIN = 60, CAL_ERINNERUNG_MIN = 1440, CAL_TZ = 'W. Europe Standard Time';
+  function calStamp(d) { return isoOf(d) + 'T' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ':00'; }
+  function calEvent(nr, r, serial) {
+    var day = fromSerial(serial), mins = Math.round((Number(serial) - Math.floor(Number(serial))) * 1440);
+    var start = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, mins);
+    var end = new Date(start.getTime() + CAL_DAUER_MIN * 60000);
+    var strasse = trimmed(ov(r, 'Strasse')), plz = trimmed(ov(r, 'PLZ')), ort = trimmed(ov(r, 'Ort')), tel = trimmed(ov(r, 'Telefon'));
+    var adresse = [strasse, [plz, ort].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+    var n = Number(ov(r, 'Anzahl Produkte')) || 0;
+    var notiz = ['Auftrag ' + nr, tel ? 'Tel. ' + tel : '', n ? n + (n === 1 ? ' Produkt' : ' Produkte') : ''].filter(Boolean).join('\n');
+    var ev = {
+      subject: 'Montage ' + (custName(r) || 'Auftrag ' + nr),
+      start: { dateTime: calStamp(start), timeZone: CAL_TZ }, end: { dateTime: calStamp(end), timeZone: CAL_TZ },
+      body: { contentType: 'text', content: notiz },
+      isReminderOn: true, reminderMinutesBeforeStart: CAL_ERINNERUNG_MIN, showAs: 'busy',
+      singleValueExtendedProperties: [{ id: CAL_PROP, value: nr }]
+    };
+    if (adresse) ev.location = { displayName: adresse, address: { street: strasse, postalCode: plz, city: ort, countryOrRegion: 'Schweiz' } };
+    return ev;
+  }
+  async function calFind(nr) {
+    var f = "singleValueExtendedProperties/Any(ep: ep/id eq '" + CAL_PROP + "' and ep/value eq '" + nr.replace(/'/g, "''") + "')";
+    var res = await graph('GET', '/me/events?$filter=' + encodeURIComponent(f) + '&$select=id');
+    return (res.value || []).map(function (e) { return e.id; });
+  }
+  // Kalender an den Termin anpassen; serial leer = Termin entfernen. Doppelte Einträge werden aufgeräumt.
+  async function syncCalendar(nr, serial) {
+    var ids = await calFind(nr), keep = null;
+    if (hasVal(serial)) {
+      var r = findOrder(nr); if (!r) throw new Error('Auftrag ' + nr + ' nicht gefunden.');
+      var ev = calEvent(nr, r, serial);
+      if (ids.length) { keep = ids[0]; await graph('PATCH', '/me/events/' + encodeURIComponent(keep), ev); }
+      else await graph('POST', '/me/events', ev);
+    }
+    for (var i = 0; i < ids.length; i++) {
+      if (ids[i] === keep) continue;
+      try { await graph('DELETE', '/me/events/' + encodeURIComponent(ids[i])); } catch (e) { if (e.status !== 404) throw e; }
+    }
+  }
+  // Montagetermin: zuerst ins Büro-Excel, danach in den Kalender
+  async function setMontage(nr, serial) {
+    busy = true;
+    dialog('<h3>Wird gespeichert …</h3><p>Büro-Excel und Kalender</p>');
+    try { await writeOrderCells(nr, mapOf('Montage geplant', serial)); }
+    catch (e) {
+      busy = false;
+      dialog('<h3>Speichern nicht möglich</h3><div class="err-box">' + esc((e && e.message) || String(e)) + '</div><div class="acts"><button class="btn primary" data-act="close">OK</button></div>');
+      return;
+    }
+    var calErr = '';
+    try { await syncCalendar(nr, serial); } catch (e) { calErr = (e && e.message) || String(e); }
+    await loadOrders();
+    busy = false;
+    if (calErr) calErrorDialog(nr, serial, calErr); else closeDialog();
+  }
+  function calErrorDialog(nr, serial, msg) {
+    dialog('<h3>Kalender nicht angepasst</h3><p>Der Termin ist im Büro-Excel ' + (hasVal(serial) ? 'gespeichert' : 'entfernt') + ', aber der Kalender konnte nicht angepasst werden.</p>' +
+      '<div class="err-box">' + esc(msg) + '</div>' +
+      '<div class="acts"><button class="btn primary" data-act="calRetry">Nochmals versuchen</button><button class="btn" data-act="close">OK</button></div>');
+    dialogActions.calRetry = async function () {
+      if (busy) return;
+      busy = true; dialog('<h3>Kalender …</h3><p>Wird angepasst.</p>');
+      try { await syncCalendar(nr, serial); busy = false; closeDialog(); }
+      catch (e) { busy = false; calErrorDialog(nr, serial, (e && e.message) || String(e)); }
+    };
+  }
+
   // Datum wählen; mit withTime zusätzlich Uhrzeit (Montagetermin). Datum und Zeit liegen in EINER Excel-Zelle.
   function dateDialog(nr, field, label, current, allowClear, withTime) {
     var d = fromSerial(current) || new Date(), tm = withTime ? timeOf(current) : '';
@@ -1537,10 +1609,11 @@ textarea.in { min-height: 64px; resize: vertical; }
         var t = $('dlgTime').value;
         if (!t) { $('dlgHint').textContent = 'Bitte eine Uhrzeit wählen.'; return; }
         var hm = t.split(':'); serial += (Number(hm[0]) * 60 + Number(hm[1])) / 1440;
+        setMontage(nr, serial); return;
       }
       setFields(nr, mapOf(field, serial));
     };
-    dialogActions.dateClr = function () { setFields(nr, mapOf(field, '')); };
+    dialogActions.dateClr = function () { if (withTime) setMontage(nr, ''); else setFields(nr, mapOf(field, '')); };
   }
   function rejectDialog(nr, editing) {
     var r = findOrder(nr), cur = r ? trimmed(ov(r, 'Ablehnungsgrund')) : '';
