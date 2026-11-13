@@ -345,7 +345,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 6y';
+  var APP_VERSION = '13.11.2026 · 6z';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'farbeText', 'breite', 'hoehe', 'tiefe', 'bem'];
   var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
@@ -1110,15 +1110,17 @@ textarea.in { min-height: 64px; resize: vertical; }
       var now = state.pending && state.pending.dateIso ? new Date(state.pending.dateIso) : new Date();
       var p = state.pending && state.pending.kind === kind ? state.pending : { kind: kind, dateIso: now.toISOString() };
       if (signature) p.signature = signature;   // bleibt für einen erneuten Versuch erhalten
-      var rows = await tableRows('tblAuftraege');
-      var existing = rows.filter(function (r) { return r[34] === state.captureId; })[0];
+      // Auftragstabelle nach Spaltennamen lesen (Reihenfolge im Excel darf sich ändern)
+      var ta = await tableData('tblAuftraege'), H = ta.headers, rows = ta.rows;
+      function cv(r, name) { var i = H.indexOf(name); return i < 0 ? '' : r[i]; }
+      var existing = rows.filter(function (r) { return cv(r, 'Erfassungs-ID') === state.captureId; })[0];
       if (existing) {
-        busy = false; finished({ orderNo: existing[0], kind: kind, fileUrl: existing[16], folderUrl: existing[17], already: true });
+        busy = false; finished({ orderNo: cv(existing, 'Auftragsnr'), kind: kind, fileUrl: cv(existing, 'Dokument-Link'), folderUrl: cv(existing, 'Ordner-Link'), already: true });
         return;
       }
       if (!p.orderNo) {
         var year = now.getFullYear(), max = 0;
-        rows.forEach(function (r) { if (Number(r[1]) === year && Number(r[2]) > max) max = Number(r[2]); });
+        rows.forEach(function (r) { if (Number(cv(r, 'Jahr')) === year && Number(cv(r, 'LaufNr')) > max) max = Number(cv(r, 'LaufNr')); });
         p.year = year; p.laufNr = max + 1; p.orderNo = year + '-' + p.laufNr;
       }
       state.pending = p; save();
@@ -1147,11 +1149,16 @@ textarea.in { min-height: 64px; resize: vertical; }
 
       step = 3; showSteps(3);
       var serial = excelDate(now);
-      var orderRow = [p.orderNo, p.year, p.laufNr, serial, kind === 'direkt' ? 'Direktbestellung' : 'Offerte',
-        trimmed(c.vorname), trimmed(c.nachname), trimmed(c.strasse), trimmed(c.plz), trimmed(c.ort), trimmed(c.telefon), trimmed(c.email),
-        tt.count, tt.area, tt.total, docName, p.fileUrl, p.folderUrl,
-        kind === 'direkt' ? 'Keine Offerte – Direktbestellung' : 'Offen', '', 'Noch nicht bestellt', '', '',
-        'Ausstehend', '', '', '', '', '', '', '', '', '', '', state.captureId];
+      // Werte nach Spaltenname; Spalten, die die App nicht kennt (Büro-Spalten, Formeln), bleiben null:
+      // Excel füllt dann die Formel der Spalte selbst ein bzw. lässt das Feld leer
+      var rec = {
+        'Auftragsnr': p.orderNo, 'Jahr': p.year, 'LaufNr': p.laufNr, 'Erfasst am': serial, 'Verkaufsart': kind === 'direkt' ? 'Direktbestellung' : 'Offerte',
+        'Vorname': trimmed(c.vorname), 'Nachname': trimmed(c.nachname), 'Strasse': trimmed(c.strasse), 'PLZ': trimmed(c.plz), 'Ort': trimmed(c.ort),
+        'Telefon': trimmed(c.telefon), 'E-Mail': trimmed(c.email), 'Anzahl Produkte': tt.count, 'Fläche m²': tt.area, 'Betrag CHF': tt.total,
+        'Dokument': docName, 'Dokument-Link': p.fileUrl, 'Ordner-Link': p.folderUrl,
+        'Offertenstatus': kind === 'direkt' ? 'Keine Offerte – Direktbestellung' : 'Offen', 'Erfassungs-ID': state.captureId
+      };
+      var orderRow = H.map(function (h) { return Object.prototype.hasOwnProperty.call(rec, h) ? rec[h] : null; });
       var posRows = pos.map(function (q) {
         // 17 Spalten wie tblPositionen: … Preis pro m² bleibt leer (Preis kommt aus dem Raster), dann Art, Rasterfeld, Preishinweis
         return [p.orderNo, q.pos, q.zimmer, q.zusatz, q.bereich, q.produkt, q.farbe, q.breite, q.hoehe, q.tiefe == null ? '' : q.tiefe, q.area, '', q.price, q.bem,
