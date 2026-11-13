@@ -207,7 +207,7 @@ textarea.in { min-height: 64px; resize: vertical; }
 .ord-list { display: flex; flex-direction: column; gap: 8px; }
 .ord-grp { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: var(--fg); margin: 14px 4px 0; }
 .ord-grp:first-child { margin-top: 10px; }
-.ord-grp .cnt { margin-left: auto; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--chip); color: var(--chip-fg); font-variant-numeric: tabular-nums; }
+.cnt { margin-left: auto; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--chip); color: var(--chip-fg); font-variant-numeric: tabular-nums; }
 .ord { display: flex; flex-direction: column; gap: 4px; width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
   padding: 14px; box-shadow: var(--shadow); cursor: pointer; color: var(--fg); font: inherit; }
 .ord .l1 { display: flex; align-items: baseline; font-size: 14px; color: var(--fg); }
@@ -215,24 +215,34 @@ textarea.in { min-height: 64px; resize: vertical; }
 .ord .nr { flex: none; white-space: nowrap; }
 .ord .amt { flex: none; margin-left: auto; padding-left: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .ord .sub { font-size: 14px; color: var(--muted); }
-.tag { align-self: flex-start; font-size: 13.5px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--surface-2); color: var(--fg); }
-.tag.red { background: var(--danger-soft); color: var(--danger); }
-.tag.ora { background: var(--warn-soft); color: var(--warn); }
-.tag.grey { color: var(--muted); }
 .empty { text-align: center; color: var(--muted); font-size: 15px; padding: 28px 12px; }
 
 /* Auftrag ansehen */
 .back { align-self: flex-start; border: 0; background: none; color: var(--accent); font: inherit; font-weight: 600; font-size: 16px; padding: 6px 2px; cursor: pointer; }
-.d-title { display: flex; flex-direction: column; gap: 6px; }
-.d-title h2 { margin: 0; font-family: var(--font-num); font-size: 24px; font-weight: 600; }
-.d-lines { display: flex; flex-direction: column; gap: 4px; font-size: 15px; }
-.d-lines a { color: var(--accent); text-decoration: none; font-weight: 600; }
+/* Detail-Kopf: links Kunde, rechts Auftrag; alles weiss und gleich gross */
+.d-head { padding-top: 14px; }
+.d-top { display: flex; justify-content: space-between; gap: 16px; font-size: 15px; line-height: 1.45; }
+.d-cust, .d-meta { display: flex; flex-direction: column; min-width: 0; }
+.d-cust > * { overflow-wrap: anywhere; }
+.d-cust a { color: var(--fg); text-decoration: none; }
+.d-meta { flex: none; text-align: right; white-space: nowrap; }
+.d-sep { border-top: 1px solid var(--line); }
+.d-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px; }
+.d-row .v { font-variant-numeric: tabular-nums; }
 .d-links { display: flex; gap: 8px; flex-wrap: wrap; }
 .d-links .btn { min-height: 44px; font-size: 15px; }
-.d-prod { display: flex; flex-direction: column; gap: 2px; padding: 10px 0; border-top: 1px solid var(--line); font-size: 14.5px; }
+.d-prod { display: flex; flex-direction: column; gap: 4px; padding: 12px 0; border-top: 1px solid var(--line); font-size: 14.5px; }
 .d-prod:first-child { border-top: 0; padding-top: 0; }
+.d-prod:last-child { padding-bottom: 0; }
 .d-prod b { font-weight: 600; }
-.d-prod span { color: var(--muted); font-size: 13.5px; }
+.d-kv { display: grid; grid-template-columns: 96px minmax(0, 1fr); row-gap: 2px; font-size: 14px; }
+.d-kv span { overflow-wrap: anywhere; }
+.d-kv span:nth-child(odd) { color: var(--muted); }
+.d-fold { width: 100%; display: flex; align-items: center; gap: 8px; border: 0; background: none; color: var(--fg); font: inherit; padding: 0; cursor: pointer; text-align: left; }
+.d-fold .chev { width: 20px; height: 20px; }
+.d-cost { gap: 8px; }
+.d-cost .fine { margin: 0; }
+.d-cost > .btn { margin-top: 2px; }
 .step-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
 .step-row:first-child { border-top: 0; }
 .step-row .dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); flex: none; display: grid; place-items: center; }
@@ -246,7 +256,7 @@ textarea.in { min-height: 64px; resize: vertical; }
 .kv .v.neg { color: var(--danger); }
 .unit.chf .in { padding-right: 50px; }
 .step-row.next .lbl { font-weight: 600; }
-.d-h { margin: 0; font-family: var(--font-num); font-size: 19px; font-weight: 600; }
+.d-h { margin: 0; font-size: 15px; font-weight: 600; }
 .acts-row .btn { min-height: 48px; }
 </style>
 </head>
@@ -432,7 +442,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 7m';
+  var APP_VERSION = '13.11.2026 · 7n';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   // «lauf» (flache Laufschiene: 'Ja' / 'Nein' / '') hat kein Eingabefeld, sondern den Ja/Nein-Schalter
   // Tiefe wird seit 7h nicht mehr erfasst (alte Aufträge behalten ihre Tiefe im Excel)
@@ -1466,6 +1476,16 @@ textarea.in { min-height: 64px; resize: vertical; }
     box.innerHTML = html;
   }
 
+  // Schweizer Nummern lesbar gliedern: 078 568 10 75 bzw. +41 78 568 10 75; alles andere bleibt, wie es eingetragen ist
+  function telFmt(t) {
+    var d = String(t).replace(/[^\d+]/g, ''), m = /^0(\d{2})(\d{3})(\d{2})(\d{2})$/.exec(d);
+    if (m) return '0' + m[1] + ' ' + m[2] + ' ' + m[3] + ' ' + m[4];
+    m = /^(?:\+|00)41(\d{2})(\d{3})(\d{2})(\d{2})$/.exec(d);
+    return m ? '+41 ' + m[1] + ' ' + m[2] + ' ' + m[3] + ' ' + m[4] : t;
+  }
+  var ICON_CHEV_DOWN = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  var DET_PROD_KEY = 'fg_detail_produkte_offen';
+  function detProdOpen() { try { return localStorage.getItem(DET_PROD_KEY) !== '0'; } catch (e) { return true; } }
   function stepRow(done, next, label, sub, btnHtml) {
     return '<div class="step-row' + (done ? ' done' : '') + (next ? ' next' : '') + '"><span class="dot">' + (done ? ICON_OK : '') + '</span>' +
       '<span class="lbl">' + esc(label) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>' + (btnHtml || '') + '</div>';
@@ -1476,31 +1496,41 @@ textarea.in { min-height: 64px; resize: vertical; }
     var nr = trimmed(ov(r, 'Auftragsnr')), s = ov(r, 'Nächster Schritt'), offerte = ov(r, 'Verkaufsart') === 'Offerte', st = trimmed(ov(r, 'Offertenstatus'));
     var tel = trimmed(ov(r, 'Telefon')), mail = trimmed(ov(r, 'E-Mail'));
     var plzOrt = [trimmed(ov(r, 'PLZ')), trimmed(ov(r, 'Ort'))].filter(Boolean).join(' ');
-    var lines = [trimmed(ov(r, 'Strasse')), plzOrt].filter(Boolean).map(function (x) { return '<span>' + esc(x) + '</span>'; });
-    if (tel) lines.push('<a href="tel:' + esc(tel.replace(/[^\d+]/g, '')) + '">' + esc(tel) + '</a>');
-    if (mail) lines.push('<a href="mailto:' + esc(mail) + '">' + esc(mail) + '</a>');
+    function span(x) { return '<span>' + esc(x) + '</span>'; }
+    // Links der Kunde (Name, Strasse, PLZ Ort, Telefon, E-Mail), rechts der Auftrag; alles weiss und gleich gross
+    var cust = [custName(r) || 'Ohne Namen', trimmed(ov(r, 'Strasse')), plzOrt].filter(Boolean).map(span);
+    if (tel) cust.push('<a href="tel:' + esc(tel.replace(/[^\d+]/g, '')) + '">' + esc(telFmt(tel)) + '</a>');
+    if (mail) cust.push('<a href="mailto:' + esc(mail) + '">' + esc(mail) + '</a>');
+    var erf = serialText(ov(r, 'Erfasst am'));
+    var meta = [offerte ? 'Offerte' : 'Kaufvertrag', erf ? 'erfasst ' + erf : '', 'Nr. ' + nr].filter(Boolean).map(span);
     var doc = trimmed(ov(r, 'Dokument-Link')), dir = trimmed(ov(r, 'Ordner-Link'));
     var html = '<button class="back" data-ordact="back">‹ Alle Aufträge</button>' +
-      '<section class="card"><div class="card-b">' +
-      '<div class="d-title"><span class="fine">Auftrag ' + esc(nr) + ' · ' + (offerte ? 'Offerte' : 'Kaufvertrag') + ' · erfasst ' + esc(serialText(ov(r, 'Erfasst am'))) + '</span>' +
-      '<h2>' + esc(custName(r) || 'Ohne Namen') + '</h2><span class="tag ' + stepCls(s) + '">' + esc(s || '–') + '</span></div>' +
-      (lines.length ? '<div class="d-lines">' + lines.join('') + '</div>' : '') +
-      '<div class="kv total"><span>Betrag</span><span class="v">CHF ' + fmt2.format(Number(ov(r, 'Betrag CHF')) || 0) + '</span></div>' +
+      '<section class="card"><div class="card-b d-head">' +
+      '<div class="d-top"><div class="d-cust">' + cust.join('') + '</div><div class="d-meta">' + meta.join('') + '</div></div>' +
+      '<div class="d-sep"></div>' +
+      '<div class="d-row"><span>Betrag</span><span class="v">CHF ' + fmt2.format(Number(ov(r, 'Betrag CHF')) || 0) + '</span></div>' +
       ((doc || dir) ? '<div class="d-links">' + (doc ? '<a class="btn" href="' + esc(doc) + '" target="_blank" rel="noopener">PDF öffnen</a>' : '') +
         (dir ? '<a class="btn" href="' + esc(dir) + '" target="_blank" rel="noopener">Ordner öffnen</a>' : '') + '</div>' : '') +
       '</div></section>';
 
-    // Produkte aus dem Blatt «Positionen»
+    // Produkte aus dem Blatt «Positionen»: pro Produkt Bereich als Titel, darunter Bezeichnung links, Wert rechts.
+    // Die ganze Kachel ist auf-/zuklappbar; die App merkt sich den letzten Zustand.
     var pos = ord.pos.filter(function (p) { return trimmed(pv(p, 'Auftragsnr')) === nr; })
       .sort(function (a, b) { return (Number(pv(a, 'Pos')) || 0) - (Number(pv(b, 'Pos')) || 0); });
+    var prodHtml = '';
     if (pos.length) {
-      html += '<section class="card"><div class="card-b"><h3 class="d-h">Produkte</h3><div>' + pos.map(function (p) {
-        var masse = [pv(p, 'Breite cm'), pv(p, 'Höhe cm')].filter(hasVal).join(' × ');
-        var info = [trimmed(pv(p, 'Produkt')), trimmed(pv(p, 'Flache Laufschiene')) === 'Ja' ? 'flache Laufschiene' : '', trimmed(pv(p, 'Farbe')),
-          trimmed(pv(p, 'Gewebe')) ? 'Gewebe ' + trimmed(pv(p, 'Gewebe')) : '', masse ? masse + ' cm' : '', hasVal(pv(p, 'Preis CHF')) ? 'CHF ' + fmt2.format(Number(pv(p, 'Preis CHF'))) : ''].filter(Boolean).join(' · ');
-        return '<div class="d-prod"><b>' + esc(pv(p, 'Pos')) + ' · ' + esc(trimmed(pv(p, 'Bereich')) || '–') + '</b><span>' + esc(info) + '</span>' +
-          (trimmed(pv(p, 'Bemerkung')) ? '<span>' + esc(pv(p, 'Bemerkung')) + '</span>' : '') + '</div>';
-      }).join('') + '</div></div></section>';
+      var pOpen = detProdOpen();
+      prodHtml = '<section class="card"><div class="card-b"><button class="d-fold' + (pOpen ? ' open' : '') + '" data-ordact="prodFold" aria-expanded="' + pOpen + '">' +
+        '<span class="d-h" role="heading" aria-level="3">Produkte</span><span class="cnt">' + pos.length + '</span>' + ICON_CHEV_DOWN + '</button>' +
+        (pOpen ? '<div>' + pos.map(function (p) {
+          var masse = [pv(p, 'Breite cm'), pv(p, 'Höhe cm')].filter(hasVal).join(' × ');
+          var kv = [['Produkt', trimmed(pv(p, 'Produkt'))], ['Laufschiene', trimmed(pv(p, 'Flache Laufschiene')) === 'Ja' ? 'flach' : ''],
+            ['Farbe', trimmed(pv(p, 'Farbe'))], ['Gewebe', trimmed(pv(p, 'Gewebe'))], ['Masse', masse ? masse + ' cm' : ''],
+            ['Preis', hasVal(pv(p, 'Preis CHF')) ? 'CHF ' + fmt2.format(Number(pv(p, 'Preis CHF'))) : ''], ['Bemerkung', trimmed(pv(p, 'Bemerkung'))]]
+            .filter(function (x) { return x[1]; });
+          return '<div class="d-prod"><b>' + esc(pv(p, 'Pos')) + '. ' + esc(trimmed(pv(p, 'Bereich')) || '–') + '</b>' +
+            '<div class="d-kv">' + kv.map(function (x) { return span(x[0]) + span(x[1]); }).join('') + '</div></div>';
+        }).join('') + '</div>' : '') + '</div></section>';
     }
 
     // Ablauf: Offerte, dann die Auftragsschritte
@@ -1536,6 +1566,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       }
     }
     html += '<section class="card"><div class="card-b"><h3 class="d-h">Ablauf</h3><div>' + steps + '</div></div></section>';
+    html += prodHtml;
 
     // Kosten (nur Aufträge): Einkauf und Lieferung trägst du selbst ein, der Gewinn rechnet sich daraus
     if (!offerte || st === 'Angenommen') {
@@ -1547,7 +1578,7 @@ textarea.in { min-height: 64px; resize: vertical; }
           '<div class="kv"><span>Lieferung</span><span class="v">' + (hasVal(kL) ? 'CHF ' + fmt2.format(Number(kL)) : '–') + '</span></div>' +
           '<div class="kv total"><span>Gewinn</span><span class="v' + (gewinn < 0 ? ' neg' : '') + '">CHF ' + fmt2.format(gewinn) + '</span></div>';
       }
-      html += '<section class="card"><div class="card-b"><div class="d-hrow"><h3 class="d-h">Kosten</h3>' +
+      html += '<section class="card"><div class="card-b d-cost"><div class="d-hrow"><h3 class="d-h">Kosten</h3>' +
         (hatKosten ? '<button class="chg" data-ordact="cost">ändern</button>' : '') + '</div>' + kosten + '</div></section>';
     }
     box.innerHTML = html;
@@ -1790,6 +1821,7 @@ textarea.in { min-height: 64px; resize: vertical; }
     else if (act === 'reject') rejectDialog(nr, false);
     else if (act === 'offerEdit') rejectDialog(nr, true);
     else if (act === 'cost') costDialog(nr);
+    else if (act === 'prodFold') { try { localStorage.setItem(DET_PROD_KEY, detProdOpen() ? '0' : '1'); } catch (e) {} renderDetail(); }
   });
 
   // ================= Start =================
