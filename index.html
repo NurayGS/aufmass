@@ -345,7 +345,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 6u';
+  var APP_VERSION = '13.11.2026 · 6v';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'farbeText', 'breite', 'hoehe', 'tiefe', 'bem'];
   var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
@@ -828,7 +828,9 @@ textarea.in { min-height: 64px; resize: vertical; }
 
     // Briefkopf: Logo links, rechts die Firmenangaben schlicht in Grau, bündig untereinander,
     // Adresse und Kontakt mit kleinem Abstand getrennt
-    if (assets.logo) doc.addImage(assets.logo, 'PNG', L, 14, 60, 60 * 180 / 856, 'logo', 'FAST');
+    // logo.png hat links 21 von 856 Pixeln leeren Rand: um diesen Rand nach links schieben,
+    // damit das Zeichen genau bündig mit Adresse, Titel und Tabelle beginnt
+    if (assets.logo) doc.addImage(assets.logo, 'PNG', L - 60 * 21 / 856, 14, 60, 60 * 180 / 856, 'logo', 'FAST');
     else { txt(NAVY, F, 'bold', 18); doc.text(fi.firma, L, 24); }
     var blk = [
       { t: fi.firma, gap: 0 }, { t: fi.strasse, gap: 0 }, { t: fi.plzOrt, gap: 0 },
