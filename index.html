@@ -464,7 +464,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 7t';
+  var APP_VERSION = '13.11.2026 · 7u';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   // «lauf» (flache Laufschiene: 'Ja' / 'Nein' / '') hat kein Eingabefeld, sondern den Ja/Nein-Schalter
   // Tiefe wird seit 7h nicht mehr erfasst (alte Aufträge behalten ihre Tiefe im Excel)
@@ -1670,6 +1670,7 @@ textarea.in { min-height: 64px; resize: vertical; }
     if (hasVal(mont) || faelle.length) {
       var bis = garantieBis(mont), heute = new Date(); heute.setHours(0, 0, 0, 0);
       var gkv = [['Montiert', serialText(mont) || '–'], ['Garantie bis', bis ? dateCH(bis) + (bis < heute ? ', abgelaufen' : '') : '–']];
+      var zuN = faelle.filter(caseClosed).length;
       var zu = faelle.filter(caseClosed).map(function (g) {
         var fall = trimmed(gv(g, 'Fall-Nr')), s = trimmed(gv(g, 'Nächster Schritt')), wie;
         if (/neue Offerte/.test(s)) wie = 'neue Offerte ' + trimmed(gv(g, 'Neue Offerte'));
@@ -1681,7 +1682,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       // Auf-/zuklappbar wie «Produkte», beim Öffnen eines Auftrags immer zu
       var gOpen = !!ord.gOpen;
       html += '<section class="card"><div class="card-b d-cost"><button class="d-fold' + (gOpen ? ' open' : '') + '" data-ordact="gFold" aria-expanded="' + gOpen + '">' +
-        '<span class="d-h" role="heading" aria-level="3">Garantie</span>' + (faelle.length ? '<span class="cnt">' + faelle.length + '</span>' : '') + ICON_CHEV_DOWN + '</button>' +
+        '<span class="d-h" role="heading" aria-level="3">Garantie</span>' + (zuN ? '<span class="cnt">' + zuN + '</span>' : '') + ICON_CHEV_DOWN + '</button>' +
         (gOpen ? '<div class="d-kv">' + gkv.map(function (x) { return span(x[0]) + span(x[1]); }).join('') + '</div>' +
           (zu ? '<div>' + zu + '</div>' : '') +
           (hasVal(mont) && ord.hasG ? '<button class="btn" data-ordact="gNew">Garantiefall erfassen</button>' : '') : '') +
