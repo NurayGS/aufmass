@@ -407,8 +407,11 @@ textarea.in { min-height: 64px; resize: vertical; }
     workbook: 'FlyGuard_Buero.xlsx',
     ordersFolder: 'Aufträge',
     company: 'FlyGuard',
-    scopes: ['User.Read', 'Files.ReadWrite', 'Calendars.ReadWrite']
+    scopes: ['User.Read', 'Files.ReadWrite'],
+    // Montagetermine in den Outlook-Kalender: vorübergehend AUS (Microsoft-Störung 13.11.2026). Zum Einschalten auf true setzen.
+    calendar: false
   };
+  if (CONFIG.calendar) CONFIG.scopes.push('Calendars.ReadWrite');
   // Ersatzwerte, falls Excel noch nicht geladen ist (gleiche Regeln wie im Blatt «Preisraster»)
   function makeGrid(widths, heights, fn) { return { widths: widths, heights: heights, cells: heights.map(function (h) { return widths.map(function (w) { return Math.round(fn(w, h) / 5) * 5; }); }) }; }
   function range(a, b) { var r = []; for (var x = a; x <= b; x += 10) r.push(x); return r; }
@@ -423,7 +426,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 7c';
+  var APP_VERSION = '13.11.2026 · 7d';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'farbeText', 'breite', 'hoehe', 'tiefe', 'bem'];
   var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
@@ -1609,11 +1612,11 @@ textarea.in { min-height: 64px; resize: vertical; }
         var t = $('dlgTime').value;
         if (!t) { $('dlgHint').textContent = 'Bitte eine Uhrzeit wählen.'; return; }
         var hm = t.split(':'); serial += (Number(hm[0]) * 60 + Number(hm[1])) / 1440;
-        setMontage(nr, serial); return;
+        if (CONFIG.calendar) { setMontage(nr, serial); return; }
       }
       setFields(nr, mapOf(field, serial));
     };
-    dialogActions.dateClr = function () { if (withTime) setMontage(nr, ''); else setFields(nr, mapOf(field, '')); };
+    dialogActions.dateClr = function () { if (withTime && CONFIG.calendar) setMontage(nr, ''); else setFields(nr, mapOf(field, '')); };
   }
   function rejectDialog(nr, editing) {
     var r = findOrder(nr), cur = r ? trimmed(ov(r, 'Ablehnungsgrund')) : '';
