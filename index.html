@@ -325,7 +325,7 @@ textarea.in { min-height: 64px; resize: vertical; }
   var CONFIG = {
     clientId: '43341944-1ef8-4f08-ab81-8e0beb387996',   // App-Registrierung «FlyGuard Aufmass» (kein Geheimnis)
     tenantId: '6488a3dd-88da-4b04-9a09-d7386ae6d49d',   // FlyGuard-Verzeichnis (kein Geheimnis)
-    basePath: 'Fylguard Excel Datei',   // Ordner in OneDrive
+    basePath: 'FlyGuard Büro',   // Ordner in OneDrive (Büro-Excel, Aufträge, Unterschrift)
     workbook: 'FlyGuard_Buero.xlsx',
     ordersFolder: 'Aufträge',
     company: 'FlyGuard',
@@ -345,7 +345,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 6x';
+  var APP_VERSION = '13.11.2026 · 6y';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   var FIELDS = ['zimmer', 'zusatz', 'produkt', 'farbe', 'farbeText', 'breite', 'hoehe', 'tiefe', 'bem'];
   var INPUT_ID = { zimmer: 'fZimmer', zusatz: 'fZusatz', produkt: 'fProdukt', farbe: 'fFarbe', farbeText: 'fFarbeText', breite: 'fBreite', hoehe: 'fHoehe', tiefe: 'fTiefe', bem: 'fBem' };
@@ -1138,7 +1138,8 @@ textarea.in { min-height: 64px; resize: vertical; }
         try { await graph('POST', base, { name: CONFIG.ordersFolder, folder: {}, '@microsoft.graph.conflictBehavior': 'fail' }); }
         catch (e) { if (e.status !== 409) throw e; }
         var folder = await graph('POST', '/me/drive/root:/' + encPath(CONFIG.basePath + '/' + CONFIG.ordersFolder) + ':/children',
-          { name: safeName(p.orderNo + ' ' + person), folder: {}, '@microsoft.graph.conflictBehavior': 'rename' });
+          // Ordnername mit Art, z. B. «2026-7 Offerte Muster Max» oder «2026-6 Kaufvertrag Arifi Leonardo»
+          { name: safeName(p.orderNo + ' ' + docName + ' ' + person), folder: {}, '@microsoft.graph.conflictBehavior': 'rename' });
         p.folderId = folder.id; p.folderUrl = folder.webUrl; state.pending = p; save();
       }
       var file = await graph('PUT', '/me/drive/items/' + p.folderId + ':/' + encodeURIComponent(fileName) + ':/content', pdf, 'application/pdf');
