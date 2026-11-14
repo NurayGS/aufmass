@@ -464,7 +464,7 @@ textarea.in { min-height: 64px; resize: vertical; }
       tuer: makeGrid(range(80, 200), range(200, 260), function (w, h) { return 500 + 37.5 * (w - 90) / 10 + 15 * (h - 210) / 10; })
     }
   };
-  var APP_VERSION = '13.11.2026 · 7u';
+  var APP_VERSION = '14.11.2026 · 7v';
   var KEY_STATE = 'flyguard-erfassung-v1', KEY_MASTER = 'flyguard-stammdaten-v2';
   // «lauf» (flache Laufschiene: 'Ja' / 'Nein' / '') hat kein Eingabefeld, sondern den Ja/Nein-Schalter
   // Tiefe wird seit 7h nicht mehr erfasst (alte Aufträge behalten ihre Tiefe im Excel)
@@ -969,6 +969,13 @@ textarea.in { min-height: 64px; resize: vertical; }
     var fi = firma(), L = 20, R = 190, isK = o.kind === 'direkt', isB = o.kind === 'bestaetigung';
     function txt(color, font, style, size) { doc.setTextColor(color[0], color[1], color[2]); doc.setFont(font, style); doc.setFontSize(size); }
     function fitImg(data, maxW, maxH) { var p = doc.getImageProperties(data), w = maxW, h = w * p.height / p.width; if (h > maxH) { h = maxH; w = h * p.width / p.height; } return { w: w, h: h }; }
+    // Einheitliche Schrift auf allen Seiten: alles 9 pt (FZ), nur der Titel (15 pt) und die Fusszeile (7.5 pt) weichen ab.
+    // Abstände: LH = Zeilenabstand, GAP = zwischen zwei Punkten, SEC = zwischen zwei Abschnitten (alles in mm)
+    var FZ = 9, LH = 3.9, GAP = 2.4, SEC = 7.6;
+    // Zeilen mit festem Zeilenabstand schreiben; gibt die Grundlinie der letzten Zeile zurück
+    function lines(arr, x, y, opt) { arr.forEach(function (s, i) { doc.text(s, x, y + i * LH, opt || {}); }); return y + (arr.length - 1) * LH; }
+    function wrap(s, w) { txt(INK, F, 'normal', FZ); return doc.splitTextToSize(s, w || (R - L)); }
+    function nextAgbRef() { return 'Seite ' + (doc.getNumberOfPages() + 1); }   // die AGB kommen immer als letzte Seite
 
     // Briefkopf: Logo links, rechts die Firmenangaben schlicht in Grau, bündig untereinander,
     // Adresse und Kontakt mit kleinem Abstand getrennt
@@ -978,40 +985,35 @@ textarea.in { min-height: 64px; resize: vertical; }
     else { txt(NAVY, F, 'bold', 18); doc.text(fi.firma, L, 24); }
     var blk = [
       { t: fi.firma, gap: 0 }, { t: fi.strasse, gap: 0 }, { t: fi.plzOrt, gap: 0 },
-      { t: fi.telefon ? 'Tel. ' + fi.telefon : '', gap: 1.8 }, { t: fi.email, gap: 0 }, { t: fi.web, gap: 0 }
+      { t: fi.telefon ? 'Tel. ' + fi.telefon : '', gap: 1.6 }, { t: fi.email, gap: 0 }, { t: fi.web, gap: 0 }
     ].filter(function (b) { return trimmed(b.t); });
-    txt(GREY, F, 'normal', 8.5);
+    txt(GREY, F, 'normal', FZ);
     var bw = 0; blk.forEach(function (b) { bw = Math.max(bw, doc.getTextWidth(b.t)); });
     var bx = R - bw, by = 16.2;
-    blk.forEach(function (b, i) { by += (i ? 4.1 : 0) + b.gap; doc.text(b.t, bx, by); });
+    blk.forEach(function (b, i) { by += (i ? LH : 0) + b.gap; doc.text(b.t, bx, by); });
 
     // Kundenadresse links, darunter die Telefonnummer des Kunden
     var c = o.customer;
-    txt(INK, F, 'normal', 10.5);
-    [[c.vorname, c.nachname].filter(Boolean).join(' '), c.strasse, [c.plz, c.ort].filter(Boolean).join(' '), trimmed(c.telefon) ? 'Tel. ' + trimmed(c.telefon) : '']
-      .filter(function (x) { return trimmed(x); })
-      .forEach(function (line, i) { doc.text(line, L, 54 + i * 5.2); });
+    txt(INK, F, 'normal', FZ);
+    lines([[c.vorname, c.nachname].filter(Boolean).join(' '), c.strasse, [c.plz, c.ort].filter(Boolean).join(' '), trimmed(c.telefon) ? 'Tel. ' + trimmed(c.telefon) : '']
+      .filter(function (x) { return trimmed(x); }), L, 54);
 
     // Rechts nur bei der Offerte: Datum und Gültigkeit. Beim Kaufvertrag steht das Datum
     // im Einleitungssatz und bei der Unterschrift. Die Nummer steht im Titel.
     var info = (isK || isB) ? [] : [['Datum', o.dateText], ['Angebot gültig bis', o.validUntil]];
     info.forEach(function (row, i) {
-      txt(GREY, F, 'normal', 9); doc.text(row[0], 132, 54 + i * 5.2);
-      txt(INK, F, 'normal', 9.5); doc.text(row[1], R, 54 + i * 5.2, { align: 'right' });
+      txt(GREY, F, 'normal', FZ); doc.text(row[0], 132, 54 + i * LH);
+      txt(INK, F, 'normal', FZ); doc.text(row[1], R, 54 + i * LH, { align: 'right' });
     });
 
     // Titel, Einleitungssatz, eine Leerzeile, dann die Tabelle
     var y = 86;
     txt(NAVY, F, 'bold', 15);
     doc.text((isK ? 'Kaufvertrag / Auftragsbestätigung ' : isB ? 'Auftragsbestätigung ' : 'Offerte ') + o.orderNo, L, y);
-    txt(INK, F, 'normal', 10);
     var introText = isK ? 'Bestellte Insektenschutz-Elemente nach Mass gemäss Aufmass vom ' + o.dateText + ':'
       : isB ? 'Vielen Dank für Ihren Auftrag vom ' + o.dateText + '. Wir bestätigen Ihnen folgende Insektenschutz-Elemente nach Mass gemäss unserer Offerte vom ' + o.offerDate + ':'
       : 'Gerne offerieren wir Ihnen folgende Insektenschutz-Elemente nach Mass gemäss Aufmass vom ' + o.dateText + ':';
-    var intro = doc.splitTextToSize(introText, R - L);
-    doc.text(intro, L, y + 7);
-    var lh = 10 * doc.getLineHeightFactor() * 25.4 / 72;   // Zeilenabstand bei 10 pt in mm
-    var tableTop = y + 7 + (intro.length - 1) * lh + 8;       // letzte Zeile + eine Leerzeile
+    var tableTop = lines(wrap(introText), L, y + 7) + 8;       // letzte Zeile + eine Leerzeile
     var body = o.positions.map(function (p) {
       var masse = fmt2.format(p.breite).replace(/\.00$/, '') + ' × ' + fmt2.format(p.hoehe).replace(/\.00$/, '') + (p.tiefe != null ? '\nTiefe ' + fmt2.format(p.tiefe).replace(/\.00$/, '') : '');
       // Produkt (mit flacher Laufschiene), Beschreibung, Gewebe und Farbe je auf eigener Zeile
@@ -1030,58 +1032,58 @@ textarea.in { min-height: 64px; resize: vertical; }
       columnStyles: { 0: { cellWidth: 12 }, 1: { cellWidth: 36 }, 3: { cellWidth: 20 }, 4: { halign: 'right', cellWidth: 24 }, 5: { halign: 'right', cellWidth: 24 } }
     });
     // Direkt unter der Tabelle rechts: Gesamtbetrag
-    y = doc.lastAutoTable.finalY + 8;
+    y = doc.lastAutoTable.finalY + 7.3;
     if (y > 250) { doc.addPage(); y = 30; }
-    txt(NAVY, F, 'bold', 11.5);
+    txt(NAVY, F, 'bold', FZ);
     doc.text('Gesamtbetrag CHF ' + fmt2.format(o.totals.total), R, y, { align: 'right' });
-    y -= 4;   // Folgetext rückt etwas näher
+
+    // Bedingungen: Überschrift, dann je Punkt der Titel fett auf eigener Zeile und der Text darunter.
+    // Mit dry = true wird nur gemessen. Gibt die Grundlinie der letzten Zeile zurück.
+    function prepTerms(list) { return list.map(function (t) { return [t[0], wrap(t[1])]; }); }
+    function drawTerms(head, list, ty, dry) {
+      if (!dry) { txt(NAVY, F, 'bold', FZ); doc.text(head, L, ty); }
+      list.forEach(function (t) {
+        ty += LH + GAP;
+        if (!dry) { txt(INK, F, 'bold', FZ); doc.text(t[0], L, ty); txt(INK, F, 'normal', FZ); lines(t[1], L, ty + LH); }
+        ty += t[1].length * LH;
+      });
+      return ty;
+    }
+    // Gruss mit eigener Unterschrift (falls hinterlegt) und Firmenname; closingH = Höhe ab der Gruss-Zeile
+    var closingH = ownSig ? 2.5 + 16 + LH : LH + GAP;
+    function closing(gy) {
+      txt(INK, F, 'normal', FZ); doc.text('Freundliche Grüsse', L, gy);
+      var ny = gy + LH + GAP;
+      if (ownSig) { var os = fitImg(ownSig, 45, 16); doc.addImage(ownSig, 'PNG', L, gy + 2.5, os.w, os.h, 'ownsig', 'FAST'); ny = gy + 2.5 + os.h + LH; }
+      txt(NAVY, FS, semi, FZ); doc.text(fi.firma, L, ny);
+    }
+
     if (isB) {
       // Auftragsbestätigung: Bedingungen (ohne «Kundenbesuch», der Kunde unterschreibt hier nicht),
-      // danach Gruss mit eigener Unterschrift wie bei der Offerte; alles bleibt zusammen
-      txt(INK, F, 'normal', 9);
-      var bt = contractTerms(o.totals.total).slice(0, 3).map(function (t) { return [t[0], doc.splitTextToSize(t[1], R - L)]; });
-      var bH = 6 + 14 + (ownSig ? 22 : 8);
-      bt.forEach(function (t) { bH += (t[1].length + 1) * 4.4 + 2.8; });
-      var by2 = y + 15;
-      if (by2 + bH > 274) { doc.addPage(); by2 = 30; }
-      txt(NAVY, F, 'bold', 10.5); doc.text('Bedingungen', L, by2); by2 += 6;
-      bt.forEach(function (t) {
-        txt(INK, F, 'bold', 9); doc.text(t[0] + ':', L, by2);
-        txt(INK, F, 'normal', 9); doc.text(t[1], L, by2 + 4.4);
-        by2 += (t[1].length + 1) * 4.4 + 2.8;
-      });
-      txt(INK, F, 'normal', 10); doc.text('Freundliche Grüsse', L, by2 + 6);
-      var bfy = by2 + 12;
-      if (ownSig) { var os3 = fitImg(ownSig, 45, 16); doc.addImage(ownSig, 'PNG', L, by2 + 8.5, os3.w, os3.h, 'ownsig', 'FAST'); bfy = by2 + 8.5 + os3.h + 4.5; }
-      txt(NAVY, FS, semi, 10.5); doc.text(fi.firma, L, bfy);
+      // danach der Gruss; alles bleibt zusammen und rutscht nie in die Fusszeile
+      var by2 = y + LH + SEC, bt = prepTerms(confirmTerms(o.totals.total, nextAgbRef()));
+      if (drawTerms('Bedingungen', bt, by2, true) + LH + SEC + closingH > 274) { doc.addPage(); by2 = 30; bt = prepTerms(confirmTerms(o.totals.total, nextAgbRef())); }
+      closing(drawTerms('Bedingungen', bt, by2) + LH + SEC);
     } else if (!isK) {
-      // Schluss: Gültigkeit, Gruss, eigene Unterschrift (falls hinterlegt), Firmenname; nie in die Fusszeile
-      if (y + (ownSig ? 54 : 38) > 274) { doc.addPage(); y = 16; }
-      txt(INK, F, 'normal', 10);
-      doc.text('Diese Offerte ist gültig bis ' + o.validUntil + '. Gerne beraten wir Sie bei Fragen und freuen uns auf Ihren Auftrag.', L, y + 17, { maxWidth: R - L });
-      doc.text('Freundliche Grüsse', L, y + 30);
-      var fy = y + 36;
-      if (ownSig) { var os = fitImg(ownSig, 45, 16); doc.addImage(ownSig, 'PNG', L, y + 32.5, os.w, os.h, 'ownsig', 'FAST'); fy = y + 32.5 + os.h + 4.5; }
-      txt(NAVY, FS, semi, 10.5); doc.text(fi.firma, L, fy);
+      // Offerte: Gültigkeit, Garantie und Hinweis auf die AGB, dann Beratung und Gruss
+      var oy = y + LH + SEC;
+      var offerParas = function () {
+        return [wrap('Diese Offerte ist gültig bis ' + o.validUntil + '. Sie erhalten ' + garantieText() + ' Garantie ab Montage. Es gelten unsere AGB auf ' + nextAgbRef() + '.'),
+          wrap('Gerne beraten wir Sie bei Fragen und freuen uns auf Ihren Auftrag.')];
+      };
+      var ps = offerParas();
+      if (oy + (ps[0].length + ps[1].length - 1) * LH + GAP + LH + SEC + closingH > 274) { doc.addPage(); oy = 30; ps = offerParas(); }
+      txt(INK, F, 'normal', FZ);
+      var oe = lines(ps[1], L, lines(ps[0], L, oy) + LH + GAP);
+      closing(oe + LH + SEC);
     } else {
-      // Vertragsbedingungen
-      // Bedingungen und Unterschriften bleiben zusammen: Unterschriften immer unten, knapp oberhalb
+      // Kaufvertrag: Bedingungen und Unterschriften bleiben zusammen. Unterschriften immer unten, knapp oberhalb
       // der Fusszeile. Reicht der Platz auf der Seite nicht, kommen beide zusammen auf eine neue Seite.
-      txt(INK, F, 'normal', 9);
-      var terms = contractTerms(o.totals.total).map(function (t) { return [t[0], doc.splitTextToSize(t[1], R - L)]; });
-      var termsH = 6;
-      terms.forEach(function (t) { termsH += (t[1].length + 1) * 4.4 + 2.8; });
-      var sy = 266, ty = y + 15;
-      if (ty + termsH > sy - 22) { doc.addPage(); ty = 30; }
-      txt(NAVY, F, 'bold', 10.5); doc.text('Vertragsbedingungen', L, ty); ty += 6;
-      // Je Bedingung: Titel fett auf eigener Zeile, Text bündig darunter
-      terms.forEach(function (t) {
-        txt(INK, F, 'bold', 9); doc.text(t[0] + ':', L, ty);
-        txt(INK, F, 'normal', 9); doc.text(t[1], L, ty + 4.4);
-        ty += (t[1].length + 1) * 4.4 + 2.8;
-      });
-      txt(INK, F, 'normal', 10);
-      doc.text([o.signPlace, o.dateText].filter(Boolean).join(', '), L, sy - 2);
+      var sy = 266, ty = y + LH + SEC, terms = prepTerms(contractTerms(o.totals.total, nextAgbRef()));
+      if (drawTerms('Vertragsbedingungen', terms, ty, true) > sy - 24) { doc.addPage(); ty = 30; terms = prepTerms(contractTerms(o.totals.total, nextAgbRef())); }
+      drawTerms('Vertragsbedingungen', terms, ty);
+      txt(INK, F, 'normal', FZ);
+      doc.text([o.signPlace, o.dateText].filter(Boolean).join(', '), L, sy - 1.5);
       if (o.signature) {
         var ip = doc.getImageProperties(o.signature), sw = 52, sh = sw * ip.height / ip.width;
         if (sh > 22) { sh = 22; sw = sh * ip.width / ip.height; }
@@ -1089,14 +1091,31 @@ textarea.in { min-height: 64px; resize: vertical; }
       }
       // FlyGuard-Seite: eigene Unterschrift auf der Linie, sonst der Firmenname
       if (ownSig) { var os2 = fitImg(ownSig, 50, 18); doc.addImage(ownSig, 'PNG', L + 120, sy - os2.h - 0.5, os2.w, os2.h, 'ownsig', 'FAST'); }
-      else { txt(NAVY, FS, semi, 10); doc.text(fi.firma, L + 120, sy - 2); }
+      else { txt(NAVY, FS, semi, FZ); doc.text(fi.firma, L + 120, sy - 1.5); }
       doc.setDrawColor(150, 156, 170); doc.setLineWidth(0.3);
       doc.line(L, sy, L + 50, sy); doc.line(L + 58, sy, L + 112, sy); doc.line(L + 120, sy, R, sy);
-      txt(GREY, F, 'normal', 8.5);
-      doc.text('Ort, Datum', L, sy + 4.5); doc.text('Unterschrift Kunde', L + 58, sy + 4.5); doc.text(fi.firma, L + 120, sy + 4.5);
+      txt(GREY, F, 'normal', FZ);
+      doc.text('Ort, Datum', L, sy + 4.3); doc.text('Unterschrift Kunde', L + 58, sy + 4.3); doc.text('Unterschrift FlyGuard', L + 120, sy + 4.3);
     }
+
+    // Letzte Seite: Allgemeine Geschäftsbedingungen in zwei Spalten, gleiche Schrift und Abstände wie Seite 1.
+    // Ein Punkt wird nie getrennt; passt er nicht mehr in die Spalte, beginnt er oben in der nächsten.
+    doc.addPage();
+    txt(NAVY, F, 'bold', 15); doc.text('Allgemeine Geschäftsbedingungen', L, 23.5);
+    txt(GREY, F, 'normal', FZ); doc.text(fi.firma + ', Stand ' + AGB_STAND, L, 30.5);
+    var CW = (R - L - 8) / 2, aTop = 39, aBottom = 273, col = 0, ay = aTop;
+    agbSections().forEach(function (s) {
+      txt(INK, F, 'bold', FZ); var th = doc.splitTextToSize(s[0], CW);
+      var tb = wrap(s[1], CW);
+      if (ay !== aTop && ay + (th.length + tb.length - 1) * LH > aBottom) { col++; ay = aTop; if (col > 1) { doc.addPage(); col = 0; } }
+      var ax = L + col * (CW + 8);
+      txt(INK, F, 'bold', FZ); var ae = lines(th, ax, ay);
+      txt(INK, F, 'normal', FZ); ae = lines(tb, ax, ae + LH);
+      ay = ae + LH + GAP;
+    });
+
     // Fusszeile auf jeder Seite
-    function joinNonEmpty(arr) { return arr.filter(function (x) { return trimmed(x); }).join('  ·  '); }
+    function joinNonEmpty(arr) { return arr.filter(function (x) { return trimmed(x); }).join(', '); }
     var foot1 = joinNonEmpty([fi.firma, fi.strasse, fi.plzOrt]);
     var foot2 = joinNonEmpty([fi.telefon ? 'Tel. ' + fi.telefon : '', fi.email, fi.web, fi.uid ? 'UID ' + fi.uid : '']);
     var pages = doc.getNumberOfPages();
@@ -1147,13 +1166,44 @@ textarea.in { min-height: 64px; resize: vertical; }
       '<div class="acts"><button class="btn primary" data-act="go">' + doc + ' erstellen und speichern</button><button class="btn" data-act="close">Abbrechen</button></div>');
   }
   // ---- Kaufvertrag: Bedingungen (gleich im PDF und im Unterschriftsfenster) ----
-  function contractTerms(total) {
+  // agbRef = Seite der AGB im PDF (z. B. «Seite 2»); im Unterschriftsfenster ohne Seitenangabe
+  function garantieText() { var n = Number(firma().garantieJahre) || 2; return n + (n === 1 ? ' Jahr' : ' Jahre'); }
+  function contractTerms(total, agbRef) {
     var fi = firma();
     return [
       ['Bestellung', 'Der Kunde bestellt die oben aufgeführten Insektenschutz-Elemente verbindlich zum Gesamtbetrag von CHF ' + fmt2.format(total) + '.'],
       ['Lieferung und Montage', 'Die Elemente werden nach Mass gefertigt. Den Montagetermin vereinbaren wir mit Ihnen, sobald die Ware eingetroffen ist.'],
       ['Zahlung', 'Nach der Montage erhalten Sie die Rechnung, zahlbar innert ' + (fi.zahlungsfrist || 30) + ' Tagen.'],
-      ['Kundenbesuch', 'Der Kunde bestätigt, dass der Besuch und die Vertragsverhandlungen auf seinen ausdrücklichen Wunsch erfolgten (Art. 40c OR).']
+      ['Garantie', garantieText() + ' ab Montage, gemäss AGB.'],
+      ['Kundenbesuch', 'Der Kunde bestätigt, dass der Besuch und die Vertragsverhandlungen auf seinen ausdrücklichen Wunsch erfolgten (Art. 40c OR).'],
+      ['AGB', 'Der Kunde hat die Allgemeinen Geschäftsbedingungen' + (agbRef ? ' (' + agbRef + ')' : '') + ' erhalten und ist damit einverstanden.']
+    ];
+  }
+  // Auftragsbestätigung: gleiche Bedingungen ohne «Kundenbesuch» (keine Unterschrift des Kunden)
+  function confirmTerms(total, agbRef) {
+    return contractTerms(total, agbRef).filter(function (t) { return t[0] !== 'Kundenbesuch'; })
+      .map(function (t) { return t[0] === 'AGB' ? ['AGB', 'Es gelten die Allgemeinen Geschäftsbedingungen (' + agbRef + ').'] : t; });
+  }
+  // ---- Allgemeine Geschäftsbedingungen (letzte Seite jeder Offerte, jedes Kaufvertrags und jeder Auftragsbestätigung) ----
+  // Text vom Inhaber freigegeben am 14.11.2026. Bei jeder inhaltlichen Änderung AGB_STAND anpassen.
+  var AGB_STAND = '14.11.2026';
+  function agbSections() {
+    var fi = firma(), mail = fi.email, frist = fi.zahlungsfrist || 30;
+    var wer = [fi.firma, fi.strasse, fi.plzOrt, mail].filter(function (x) { return trimmed(x); }).join(', ');
+    return [
+      ['1. Geltung', 'Diese AGB gelten für alle Offerten, Kaufverträge und Aufträge von ' + fi.firma + ' («wir») und sind deren Bestandteil. Abweichungen gelten nur, wenn sie schriftlich vereinbart sind.'],
+      ['2. Offerte und Masse', 'Die Offerte gilt bis zum angegebenen Datum. Wir nehmen die Masse bei Ihnen vor Ort, die Preise richten sich nach diesen Massen. Ändert sich nach dem Aufmass etwas an Fenstern oder Türen, melden Sie uns das bitte vor der Bestellung.'],
+      ['3. Vertragsabschluss und Kundenbesuch', 'Der Vertrag kommt mit Ihrer Unterschrift auf dem Kaufvertrag oder mit Ihrer Annahme der Offerte zustande. Die Annahme bestätigen wir mit einer Auftragsbestätigung. Besuch und Vertragsverhandlungen erfolgen auf Ihren ausdrücklichen Wunsch. Ein Widerrufsrecht besteht deshalb nicht (Art. 40c OR).'],
+      ['4. Rücktritt nach der Bestellung', 'Die Elemente werden nach Mass für Sie gefertigt. Bei einem Rücktritt nach Vertragsabschluss ersetzen Sie uns die geleistete Arbeit und den entstandenen Schaden, insbesondere bereits bestellte Elemente (Art. 377 OR).'],
+      ['5. Lieferung und Montagetermin', 'Den Montagetermin vereinbaren wir mit Ihnen, sobald die Ware eingetroffen ist. Lieferzeiten sind Richtwerte. Bitte sagen Sie einen Termin mindestens 24 Stunden vorher ab. Bei späterer Absage oder wenn bei unserer Ankunft niemand da ist, berechnen wir CHF 50 Umtriebsentschädigung.'],
+      ['6. Montage', 'Bitte sorgen Sie für freien Zugang zu Fenstern und Türen. Je nach System werden die Elemente geklemmt oder am Fenster- oder Türrahmen festgeschraubt. Mit den dafür nötigen Bohrungen sind Sie einverstanden. In einer Mietwohnung holen Sie vorher die Zustimmung des Vermieters ein. Bitte weisen Sie uns auf verdeckte Leitungen, Alarmkontakte oder beschädigte Rahmen hin. Für Schäden und Mängel, die schon vor der Montage bestanden, haften wir nicht.'],
+      ['7. Abnahme und Mängel', 'Bitte prüfen Sie die Elemente bei der Montage und melden Sie sichtbare Mängel sofort, später entdeckte innert 30 Tagen nach der Entdeckung. Wir beheben Mängel durch Reparatur oder Ersatz. Gelingt das nicht, gelten Ihre gesetzlichen Rechte. Ansprüche wegen Mängeln verjähren 2 Jahre nach der Montage.'],
+      ['8. Garantie', 'Zusätzlich erhalten Sie ' + garantieText() + ' Garantie ab Montage. Ist ein Element in dieser Zeit defekt, ersetzen wir es kostenlos, inklusive Lieferung und Montage. Ausgenommen sind Schäden durch Gewalt, Tiere, Unwetter oder falsche Bedienung. Melden Sie einen Garantiefall bitte mit einem Foto an ' + mail + ' oder ' + fi.telefon + '.'],
+      ['9. Haftung', 'Für Schäden, die wir bei Lieferung oder Montage verschulden, haften wir nach Gesetz. Für indirekte Schäden und Folgeschäden haften wir nur bei Absicht oder grober Fahrlässigkeit.'],
+      ['10. Zahlung', 'Die Rechnung erhalten Sie nach der Montage, zahlbar innert ' + frist + ' Tagen. Bei Zahlungsverzug schulden Sie 5 % Verzugszins pro Jahr. Die 1. Mahnung ist kostenlos, die 2. und 3. Mahnung kosten je CHF 20.'],
+      ['11. Vertraulichkeit', 'Alle Angaben über Sie und Ihre Wohnung behandeln wir vertraulich, auch nach dem Auftrag. Fotos, zum Beispiel für das Aufmass oder einen Garantiefall, verwenden wir nur für Ihren Auftrag. Für Werbung nur mit Ihrem Einverständnis.'],
+      ['12. Datenschutz', 'Verantwortlich ist ' + wer + '. Wir bearbeiten Ihre Angaben (Name, Adresse, Telefon, E-Mail, Auftrags- und Produktdaten, Unterschrift, Fotos) für Offerte, Vertrag, Bestellung, Montage, Rechnung, Garantie und die gesetzliche Aufbewahrung. Wir speichern sie bei Microsoft 365, das sie in unserem Auftrag bearbeitet. Nachrichten senden wir per WhatsApp oder E-Mail. Microsoft und WhatsApp können Daten auch in der EU und in den USA bearbeiten. Beide sind nach dem Datenschutzrahmen Schweiz–USA zertifiziert, den der Bundesrat als angemessen anerkennt. Weiteren Dritten geben wir Ihre Daten nur weiter, wenn es für den Auftrag nötig ist. Vertrags- und Buchhaltungsunterlagen bewahren wir 10 Jahre auf (Art. 958f OR). Auskunft, Berichtigung oder Löschung, soweit keine Aufbewahrungspflicht besteht, erhalten Sie unter ' + mail + '.'],
+      ['13. Schlussbestimmungen', 'Es gilt Schweizer Recht. Ist eine Bestimmung ungültig, gelten die übrigen weiter. An ihre Stelle tritt die gesetzliche Regelung.']
     ];
   }
 
